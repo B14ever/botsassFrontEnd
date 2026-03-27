@@ -48,7 +48,7 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md space-y-8 glass-dark p-10 rounded-[2.5rem] border border-white/10 relative z-10"
       >
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-primary/30 to-transparent" />
 
         <div className="text-center space-y-3">
           <div className="flex justify-center">
