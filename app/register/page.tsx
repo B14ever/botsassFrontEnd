@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Bot, Mail, Lock, User, ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
@@ -37,8 +38,20 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await api.post("/auth/signup", formData);
-      toast.success("Account created! Please log in.");
-      router.push("/login");
+      toast.success("Account created successfully!");
+      
+      // Auto-login after registration
+      const res = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (!res?.error) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Registration failed");
     } finally {
