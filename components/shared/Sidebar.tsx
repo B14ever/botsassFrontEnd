@@ -50,17 +50,23 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 								key={item.name}
 								href={item.href}
 								className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group relative ${
-									isActive
-										? 'bg-primary/10 text-primary border border-primary/20'
-										: 'text-muted-foreground hover:bg-white/5 hover:text-white'
+									isActive ? 'text-white' : 'text-white/40 hover:text-white'
 								}`}
 							>
-								<item.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
-								<span className="font-medium">{item.name}</span>
 								{isActive && (
 									<motion.div
-										layoutId="active-pill"
-										className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]"
+										layoutId="active-nav-pill"
+										className="absolute inset-0 bg-primary/20 border border-primary/20 rounded-2xl shadow-[inset_0_0_20px_rgba(var(--primary),0.1)]"
+										transition={{ type: "spring", stiffness: 350, damping: 30 }}
+									/>
+								)}
+								<item.icon className="w-5 h-5 relative z-10 transition-transform group-hover:scale-110" />
+								<span className="font-bold text-sm relative z-10 font-outfit uppercase tracking-widest">{item.name}</span>
+								{isActive && (
+									<motion.div
+										className="absolute right-3 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_15px_rgba(var(--primary),1)]"
+										animate={{ scale: [1, 1.2, 1] }}
+										transition={{ repeat: Infinity, duration: 2 }}
 									/>
 								)}
 							</Link>
@@ -103,10 +109,10 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 			</button>
 
 			{/* Content Root */}
-			<main className="flex-1 h-full overflow-y-auto bg-background/95 relative antialiased p-0 sm:p-3">
-				<div className="max-w-7xl mx-auto h-full sm:glass-dark sm:rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden relative border border-white/5">
-					<div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-					<div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+			<main className="flex-1 h-full overflow-y-auto bg-black relative antialiased p-0 sm:p-4">
+				<div className="max-w-7xl mx-auto h-full sm:glass-dark sm:rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden relative border border-white/5">
+					<div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
+					<div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none opacity-30" />
 
 					<div className="relative h-full overflow-y-auto custom-scrollbar px-6 py-8">
 						<AnimatePresence mode="wait">

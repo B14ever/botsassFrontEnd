@@ -70,14 +70,16 @@ export default function RegisterPage() {
         transition={{ duration: 0.3 }}
         className="w-full max-w-md z-10"
       >
-        <Card className="glass-dark border-white/5 rounded-[2.5rem] shadow-2xl">
+        <Card className="glass-dark border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          
           <CardHeader className="text-center pt-10">
-            <div className="mx-auto w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-primary/20">
-              <Bot className="w-8 h-8 text-white" />
+            <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-primary/40 rotate-12">
+              <Bot className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold font-outfit text-white">Join the Matrix</CardTitle>
-            <CardDescription className="text-white/40 mt-2">
-              Start building your autonomous AI fleet today.
+            <CardTitle className="text-4xl font-black font-outfit tracking-tighter text-white">Join the Matrix</CardTitle>
+            <CardDescription className="text-white/40 font-medium mt-2 italic">
+               Secure registration for the neural fleet.
             </CardDescription>
           </CardHeader>
 
@@ -125,10 +127,10 @@ export default function RegisterPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-14 bg-white text-black hover:bg-white/90 rounded-2xl font-bold text-lg transition-all group flex items-center justify-center gap-2"
+                className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xl transition-all group flex items-center justify-center gap-3 shadow-2xl shadow-primary/20"
               >
-                {loading ? "Initializing..." : "Register Now"}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {loading ? <span className="animate-spin w-6 h-6 border-b-2 border-white rounded-full" /> : "Initiate Protocol"}
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </Button>
             </form>
 

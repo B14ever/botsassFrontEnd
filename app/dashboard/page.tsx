@@ -48,21 +48,28 @@ export default function DashboardPage() {
     bot.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   return (
     <Sidebar>
-      <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
         {/* Welcome Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent font-outfit">
-              Your AI Matrix
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-5xl font-black bg-gradient-to-r from-white via-white to-white/20 bg-clip-text text-transparent font-outfit tracking-tighter">
+              {getGreeting()}, <span className="text-primary">{session?.user?.name || 'Commander'}</span>
             </h1>
-            <p className="text-white/40 mt-1">Welcome back, {session?.user?.name || 'Commander'}.</p>
+            <p className="text-white/40 font-medium tracking-wide">Your AI infrastructure is optimal. {filteredBots.length} active agents detected.</p>
           </div>
           <Link href="/dashboard/create">
-            <Button className="bg-white text-black hover:bg-white/90 font-semibold px-6 transition-all hover:scale-105 active:scale-95 h-12 rounded-2xl">
-              <Plus className="w-5 h-5 mr-2" />
-              Create New Bot
+            <Button className="bg-white text-black hover:bg-white/90 font-black px-8 transition-all hover:scale-105 active:scale-95 h-14 rounded-2xl shadow-xl shadow-white/5">
+              <Plus className="w-5 h-5 mr-2 stroke-[3px]" />
+              Initialize New Bot
             </Button>
           </Link>
         </div>
@@ -148,19 +155,20 @@ export default function DashboardPage() {
 
 function StatsCard({ title, value, icon, trend, color }: { title: string, value: string | number, icon: React.ReactNode, trend: string, color: string }) {
   return (
-    <Card className="glass border-white/5 rounded-3xl overflow-hidden relative group hover:border-white/20 transition-all">
-      <div className={`absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
+    <Card className="glass-dark border-white/5 rounded-3xl overflow-hidden relative group hover:border-white/10 transition-all card-hover">
+      <div className={`absolute -top-2 -right-2 p-6 opacity-5 group-hover:opacity-20 transition-opacity ${color} scale-150`}>
         {icon}
       </div>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-white/40">{title}</CardTitle>
+        <CardTitle className="text-[10px] uppercase font-black tracking-[0.2em] text-white/30">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-white">{value}</div>
-        <p className="text-xs text-white/20 mt-2 flex items-center gap-1">
-          <BarChart3 className="w-3 h-3 text-green-500" />
-          {trend}
-        </p>
+        <div className="text-4xl font-black text-white font-outfit tracking-tight">{value}</div>
+        <div className="mt-3 flex items-center gap-2">
+          <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
+            {trend}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -169,26 +177,28 @@ function StatsCard({ title, value, icon, trend, color }: { title: string, value:
 function BotCard({ bot, index }: { bot: any, index: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.05 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
     >
-      <Card className="glass border-white/5 rounded-[2rem] overflow-hidden group hover:border-white/20 transition-all relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Card className="glass-dark border-white/5 rounded-[2.5rem] overflow-hidden group hover:border-primary/30 transition-all relative card-hover">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/40 group-hover:text-white group-hover:bg-white/10 transition-all">
-              <Bot className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-primary group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+              <Bot className="w-7 h-7" />
             </div>
-            <Button variant="ghost" size="icon" className="text-white/20 hover:text-white hover:bg-white/10 rounded-full">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-1">
+               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+               <div className="w-2 h-2 rounded-full bg-white/10" />
+               <div className="w-2 h-2 rounded-full bg-white/10" />
+            </div>
           </div>
-          <div className="mt-4 space-y-1">
-            <CardTitle className="text-xl text-white font-outfit">{bot.name}</CardTitle>
-            <CardDescription className="text-white/30 line-clamp-2 min-h-[2.5rem]">
-              {bot.description || "Specialized knowledge-powered assistant."}
+          <div className="mt-6 space-y-2">
+            <CardTitle className="text-2xl text-white font-black font-outfit tracking-tight">{bot.name}</CardTitle>
+            <CardDescription className="text-white/40 font-medium line-clamp-2 min-h-[3rem] leading-relaxed italic">
+              " {bot.description || "Specialized intelligence agent optimized for RAG tasks."} "
             </CardDescription>
           </div>
         </CardHeader>

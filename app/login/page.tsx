@@ -47,16 +47,18 @@ export default function LoginPage() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md space-y-8 glass p-10 rounded-3xl"
+        className="w-full max-w-md space-y-8 glass-dark p-10 rounded-[2.5rem] border border-white/10 relative z-10"
       >
-        <div className="text-center space-y-2">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        
+        <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/40 rotate-12 group-hover:rotate-0 transition-transform">
               <Bot className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold font-outfit gradient-text">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in using Next-Auth v5</p>
+          <h1 className="text-4xl font-black font-outfit tracking-tighter text-white">Neural Access</h1>
+          <p className="text-white/40 font-medium text-sm tracking-wide italic">Secure authentication to vector memory</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -97,11 +99,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-black h-16 rounded-2xl shadow-2xl shadow-primary/20 transition-all flex items-center justify-center gap-3 group disabled:opacity-50 text-xl tracking-tight"
           >
-            {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
+            {loading ? <Loader2 className="animate-spin w-6 h-6" /> : (
               <>
-                Sign In <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Initiate Login <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </>
             )}
           </button>

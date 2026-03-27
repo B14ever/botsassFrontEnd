@@ -16,10 +16,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.email || !credentials?.password) {
+            console.log("[DEBUG-AUTH] Missing credentials");
+            return null;
+        }
+        
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        console.log(`[DEBUG-AUTH] Calling API: ${apiUrl}/auth/login with Email: ${credentials.email}`);
         
         try {
-          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          const res = await axios.post(`${apiUrl}/auth/login`, {
             email: credentials.email,
             password: credentials.password,
           })

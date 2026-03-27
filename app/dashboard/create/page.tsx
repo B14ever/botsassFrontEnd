@@ -1,9 +1,8 @@
-"use strict";
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, 
   Upload, 
@@ -12,7 +11,11 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Zap,
+  ShieldCheck,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import Sidebar from "@/components/shared/Sidebar";
 
 export default function CreateBotPage() {
   const router = useRouter();
@@ -50,7 +54,7 @@ export default function CreateBotPage() {
     try {
       const resp = await api.post("/bots/", { name, description });
       setBotId(resp.data.id);
-      toast.success("Bot created! Now add some knowledge.");
+      toast.success("Identity initialized! Commencing knowledge upload.");
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create bot");
     } finally {
@@ -64,7 +68,7 @@ export default function CreateBotPage() {
     setIngestionError(null);
     try {
       await api.post("/ingest/url", { bot_id: botId, source: url });
-      toast.success("Learning from website started!");
+      toast.success("Neural scraping initiated. Processing background link...");
       router.push("/dashboard");
     } catch (error: any) {
       const errMsg = error.response?.data?.error || "Ingestion failed";
@@ -87,7 +91,7 @@ export default function CreateBotPage() {
       await api.post("/ingest/pdf", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("Learning from PDF started!");
+      toast.success("Document analyzed. Chunks being stored in vector memory.");
       router.push("/dashboard");
     } catch (error: any) {
       const errMsg = error.response?.data?.error || "Ingestion failed";
@@ -99,224 +103,243 @@ export default function CreateBotPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <Sidebar>
+      <div className="max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+               <Sparkles className="w-3 h-3" />
+               Knowledge Base Initialization
+            </div>
+            <h1 className="text-5xl font-black bg-gradient-to-r from-white via-white to-white/20 bg-clip-text text-transparent font-outfit tracking-tighter">
+              Create AI Agent
+            </h1>
+            <p className="text-white/40 font-medium tracking-wide max-w-lg">
+              Design a specialized intelligence layer that understands your private product data.
+            </p>
+          </div>
           <Button 
             variant="ghost" 
-            size="icon" 
             onClick={() => router.back()}
-            className="hover:bg-white/10 rounded-full"
+            className="text-white/40 hover:text-white hover:bg-white/5 font-bold rounded-2xl h-12 px-6 border border-white/5"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Abort Operation
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-              Create Knowledge Bot
-            </h1>
-            <p className="text-white/40">Build an AI that knows your specific data</p>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Step Indicators */}
-          <div className="space-y-4">
+          <div className="lg:col-span-4 space-y-4">
             <StepItem 
               active={!botId} 
               completed={!!botId} 
               number={1} 
-              title="Identity" 
-              desc="Name and description" 
+              title="Identity & Core" 
+              desc="Define the agent's persona and purpose." 
             />
+            <div className="flex justify-center py-2">
+               <div className="w-[2px] h-8 bg-gradient-to-b from-primary to-transparent opacity-20" />
+            </div>
             <StepItem 
               active={!!botId} 
               completed={false} 
               number={2} 
-              title="Knowledge" 
-              desc="URLs, Documents, or Files" 
+              title="Neural Training" 
+              desc="Connect knowledge and vector memory." 
             />
           </div>
 
           {/* Main Content */}
-          <div className="md:col-span-2 space-y-6">
-            {!botId ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-                  <CardHeader>
-                    <CardTitle className="text-white">Bot Identity</CardTitle>
-                    <CardDescription className="text-white/40">
-                      Give your bot a name and explain what it should help with.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleCreateBot} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-white/60">Bot Name</Label>
-                        <Input 
-                          placeholder="e.g. Acme Support Hero" 
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-white/60">Description (Optional)</Label>
-                        <Input 
-                          placeholder="Internal bot for product documentation" 
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                        />
-                      </div>
-                      <Button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-white text-black hover:bg-white/90 font-semibold"
-                      >
-                        {loading ? "Creating..." : "Create Bot Identity"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Plus className="w-5 h-5 text-green-400" />
-                      Add Knowledge
-                    </CardTitle>
-                    <CardDescription className="text-white/40">
-                      Choose how you want your bot to learn.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {ingestionError && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex gap-3 text-red-200"
-                      >
-                        <AlertCircle className="w-5 h-5 shrink-0" />
-                        <div className="text-xs space-y-1">
-                          <p className="font-bold text-red-400">Ingestion issue detected</p>
-                          <p className="opacity-80 leading-relaxed font-medium">{ingestionError}</p>
+          <div className="lg:col-span-8">
+            <AnimatePresence mode="wait">
+              {!botId ? (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  className="space-y-6"
+                >
+                  <Card className="glass-dark border-white/10 rounded-[2.5rem] overflow-hidden card-hover transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <CardHeader className="pb-8">
+                        <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+                           <Bot className="w-7 h-7 text-primary" />
                         </div>
-                      </motion.div>
-                    )}
-                    <Tabs defaultValue="url" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10">
-                        <TabsTrigger value="url" className="data-[state=active]:bg-white/10">
-                          <Globe className="w-4 h-4 mr-2" />
-                          Website URL
-                        </TabsTrigger>
-                        <TabsTrigger value="file" className="data-[state=active]:bg-white/10">
-                          <Upload className="w-4 h-4 mr-2" />
-                          PDF Document
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="url" className="mt-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-white/60">Website URL</Label>
+                        <CardTitle className="text-3xl font-black font-outfit text-white">Agent Profile</CardTitle>
+                        <CardDescription className="text-white/40 font-medium">
+                          These details define how your bot identifies itself to your users.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleCreateBot} className="space-y-8">
+                        <div className="space-y-3">
+                          <Label className="text-[10px] uppercase font-black tracking-widest text-white/40 ml-1">Agent Name</Label>
                           <Input 
-                            placeholder="https://docs.example.com" 
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            className="bg-white/5 border-white/10 text-white"
+                            placeholder="e.g. Nexus Support Intelligence" 
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="h-14 bg-white/[0.03] border-white/10 text-white placeholder:text-white/10 rounded-2xl focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label className="text-[10px] uppercase font-black tracking-widest text-white/40 ml-1">System Instructions (Optional)</Label>
+                          <Input 
+                            placeholder="Expert on product stability and API integration..." 
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="h-14 bg-white/[0.03] border-white/10 text-white placeholder:text-white/10 rounded-2xl focus:ring-primary/20 transition-all font-medium text-lg px-6"
                           />
                         </div>
                         <Button 
-                          onClick={handleIngestURL}
-                          disabled={!url || loading}
-                          className="w-full bg-white text-black hover:bg-white/90"
+                          type="submit" 
+                          disabled={loading}
+                          className="w-full bg-primary text-white hover:bg-primary/90 h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 group"
                         >
-                          {loading ? "Processing..." : "Start Learning"}
-                        </Button>
-                      </TabsContent>
-
-                      <TabsContent value="file" className="mt-4 space-y-4">
-                        <div 
-                          className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-colors ${
-                            pdfFile ? 'border-green-400/50 bg-green-400/5' : 'border-white/10 hover:border-white/20'
-                          }`}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            const file = e.dataTransfer.files[0];
-                            if (file?.type === "application/pdf") setPdfFile(file);
-                            else toast.error("Please upload a PDF file");
-                          }}
-                        >
-                          {pdfFile ? (
-                            <>
-                              <FileText className="w-12 h-12 text-green-400 mb-2" />
-                              <p className="text-white font-medium">{pdfFile.name}</p>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => setPdfFile(null)}
-                                className="mt-2 text-white/40 hover:text-white"
-                              >
-                                Change file
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-12 h-12 text-white/20 mb-2" />
-                              <p className="text-white/60">Drag and drop your PDF</p>
-                              <p className="text-white/20 text-sm mt-1">Maximum 10MB</p>
-                              <input 
-                                type="file" 
-                                accept=".pdf" 
-                                className="hidden" 
-                                id="pdf-upload"
-                                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                              />
-                              <Button 
-                                variant="outline" 
-                                className="mt-4 bg-transparent border-white/10 text-white"
-                                onClick={() => document.getElementById('pdf-upload')?.click()}
-                              >
-                                Choose File
-                              </Button>
-                            </>
+                          {loading ? "Initializing..." : (
+                            <span className="flex items-center gap-2">
+                               Confirm & Proceed
+                               <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                            </span>
                           )}
-                        </div>
-                        <Button 
-                          onClick={handleIngestPDF}
-                          disabled={!pdfFile || loading}
-                          className="w-full bg-white text-black hover:bg-white/90"
-                        >
-                          {loading ? "Uploading..." : "Upload & Learn"}
                         </Button>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="space-y-8"
+                >
+                  <Card className="glass-dark border-white/10 rounded-[2.5rem] overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px]" />
+                    <CardHeader className="pb-8">
+                       <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                          <Plus className="w-7 h-7 text-emerald-400" />
+                       </div>
+                       <CardTitle className="text-3xl font-black font-outfit text-white">Knowledge Ingestion</CardTitle>
+                       <CardDescription className="text-white/40 font-medium">
+                         Synchronize documents or websites to build the agent's memory.
+                       </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                      {ingestionError && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="p-6 bg-red-500/5 border border-red-500/20 rounded-3xl flex gap-4 text-red-200"
+                        >
+                          <AlertCircle className="w-6 h-6 shrink-0 text-red-500" />
+                          <div className="space-y-1">
+                            <p className="font-black text-xs uppercase tracking-widest text-red-400">Ingestion Failure detected</p>
+                            <p className="opacity-80 leading-relaxed font-semibold">{ingestionError}</p>
+                          </div>
+                        </motion.div>
+                      )}
+                      
+                      <Tabs defaultValue="url" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 bg-white/[0.03] border border-white/5 h-14 rounded-2xl p-1.5 mb-8">
+                          <TabsTrigger value="url" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all">
+                            <Globe className="w-4 h-4 mr-2" />
+                            Scrape Website
+                          </TabsTrigger>
+                          <TabsTrigger value="file" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-all">
+                            <Upload className="w-4 h-4 mr-2" />
+                            PDF Archive
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="url" className="space-y-6">
+                          <div className="space-y-3">
+                            <Label className="text-[10px] uppercase font-black tracking-widest text-white/40 ml-1">Documentation URL</Label>
+                            <Input 
+                              placeholder="https://docs.yourcompany.com" 
+                              value={url}
+                              onChange={(e) => setUrl(e.target.value)}
+                              className="h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl px-6 font-medium"
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleIngestURL}
+                            disabled={!url || loading}
+                            className="w-full bg-white text-black hover:bg-white/90 h-16 rounded-2xl font-black text-xl shadow-2xl transition-all"
+                          >
+                            {loading ? "Crawling Neural Path..." : "Commence Scraping"}
+                          </Button>
+                        </TabsContent>
 
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-400 shrink-0" />
-                  <p className="text-sm text-blue-200/80">
-                    Ingestion might take a few minutes depending on the size of the content. 
-                    You can start chatting with your bot once processing is complete.
-                  </p>
-                </div>
-              </motion.div>
-            )}
+                        <TabsContent value="file" className="space-y-6">
+                          <div 
+                            className={`border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center transition-all cursor-pointer group ${
+                              pdfFile ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+                            }`}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const file = e.dataTransfer.files[0];
+                              if (file?.type === "application/pdf") setPdfFile(file);
+                              else toast.error("Please upload a PDF file");
+                            }}
+                            onClick={() => document.getElementById('pdf-upload')?.click()}
+                          >
+                            {pdfFile ? (
+                              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center">
+                                <FileText className="w-16 h-16 text-primary mb-4 mx-auto" />
+                                <p className="text-white text-lg font-black">{pdfFile.name}</p>
+                                <p className="text-white/40 text-sm mt-1 uppercase tracking-widest font-black">Ready for Processing</p>
+                              </motion.div>
+                            ) : (
+                              <div className="text-center space-y-4">
+                                <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-500">
+                                   <Upload className="w-10 h-10 text-white/20" />
+                                </div>
+                                <div className="space-y-1">
+                                   <p className="text-white font-bold text-xl">Deposit Neural Archive</p>
+                                   <p className="text-white/20 text-sm font-medium">Drag and drop your PDF or click to browse</p>
+                                </div>
+                              </div>
+                            )}
+                            <input 
+                              type="file" 
+                              accept=".pdf" 
+                              className="hidden" 
+                              id="pdf-upload"
+                              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleIngestPDF}
+                            disabled={!pdfFile || loading}
+                            className="w-full bg-white text-black hover:bg-white/90 h-16 rounded-2xl font-black text-xl transition-all"
+                          >
+                            {loading ? "Injecting Data..." : "Upload & Train Agent"}
+                          </Button>
+                        </TabsContent>
+                      </Tabs>
+                    </CardContent>
+                  </Card>
+
+                  <div className="p-6 bg-primary/5 border border-primary/10 rounded-[2.5rem] flex gap-4 items-center">
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
+                       <Zap className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-sm text-white/40 font-medium leading-relaxed italic">
+                      " Once ingested, the agent will split your data into discrete vector chunks. 
+                      This ensures exact retrieval during chat sessions. "
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
-    </div>
+    </Sidebar>
   );
 }
 
@@ -334,22 +357,28 @@ function StepItem({
   completed: boolean; 
 }) {
   return (
-    <div className={`p-4 rounded-xl border transition-all ${
-      active ? 'bg-white/10 border-white/20 ring-1 ring-white/20' : 
-      completed ? 'bg-green-500/5 border-green-500/20' : 'bg-transparent border-white/5'
+    <div className={`p-6 rounded-[2rem] border transition-all duration-500 relative overflow-hidden group ${
+      active ? 'bg-white/5 border-white/20 shadow-2xl shadow-primary/5' : 
+      completed ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-transparent border-white/5 opacity-40'
     }`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-          completed ? 'bg-green-500 text-white' : 
-          active ? 'bg-white text-black' : 'bg-white/10 text-white/40'
+      {active && (
+         <motion.div 
+            layoutId="step-gradient"
+            className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" 
+         />
+      )}
+      <div className="flex items-start gap-5 relative z-10">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black transition-all ${
+          completed ? 'bg-emerald-500 text-white' : 
+          active ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110' : 'bg-white/5 text-white/20'
         }`}>
-          {completed ? <CheckCircle2 className="w-5 h-5" /> : number}
+          {completed ? <ShieldCheck className="w-6 h-6" /> : number}
         </div>
-        <div>
-          <h3 className={`font-semibold ${active || completed ? 'text-white' : 'text-white/40'}`}>
+        <div className="space-y-1">
+          <h3 className={`text-lg font-black font-outfit leading-none ${active || completed ? 'text-white' : 'text-white/40'}`}>
             {title}
           </h3>
-          <p className="text-xs text-white/20">{desc}</p>
+          <p className="text-sm font-medium text-white/30 leading-tight pr-4">{desc}</p>
         </div>
       </div>
     </div>
