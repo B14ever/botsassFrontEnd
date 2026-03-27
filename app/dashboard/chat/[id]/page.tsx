@@ -1,15 +1,15 @@
-"use strict";
+﻿"use strict";
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Send, 
-  Bot, 
-  User, 
-  ArrowLeft, 
-  Paperclip, 
+import { motion } from "framer-motion";
+import {
+  Send,
+  Bot,
+  User,
+  ArrowLeft,
+  Paperclip,
   Sparkles,
   RefreshCcw,
   Shield,
@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Card, 
-  CardContent, 
+import {
+  Card,
+  CardContent,
 } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -65,23 +65,19 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      // For real streaming, we would use fetch and a reader, 
-      // but for this implementation we'll use the eventsource-style approach 
-      // or simply wait for the final message if we want to simplify.
-      
       const session = await getSession();
       const token = (session as any)?.accessToken;
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api/v1'}/chat/ask`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1"}/chat/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token || ''}`
+          "Authorization": `Bearer ${token || ""}`
         },
         body: JSON.stringify({ bot_id: id, message: userMessage })
       });
 
-      if (!response.ok) throw new Error("Failed to connect to AI");
+      if (!response.ok) throw new Error("Failed to connect");
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No reader");
@@ -95,7 +91,7 @@ export default function ChatPage() {
 
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split("\n");
-        
+
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const content = line.slice(6);
@@ -109,7 +105,7 @@ export default function ChatPage() {
         }
       }
     } catch (error: any) {
-      toast.error("AI Communication error. Please check your backend connection.");
+      toast.error("Failed to connect. Please check your backend connection.");
       console.error(error);
     } finally {
       setIsTyping(false);
@@ -118,12 +114,11 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#030303] text-white">
-      {/* Dynamic Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur-xl z-10">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => router.back()}
             className="hover:bg-white/10 rounded-full"
           >
@@ -135,7 +130,7 @@ export default function ChatPage() {
             </div>
             <div>
               <h2 className="font-bold font-outfit text-white leading-tight">
-                {bot?.name || "AI Assistant"}
+                {bot?.name || "Support Bot"}
               </h2>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -155,8 +150,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth"
       >
@@ -164,8 +158,8 @@ export default function ChatPage() {
           <div className="h-full flex flex-col items-center justify-center opacity-30 text-center space-y-4">
             <Sparkles className="w-12 h-12" />
             <div className="space-y-1">
-              <h3 className="text-xl font-bold font-outfit uppercase tracking-wider text-white">Neural Uplink Ready</h3>
-              <p className="text-sm max-w-xs">Start a conversation with your customized knowledge base.</p>
+              <h3 className="text-xl font-bold font-outfit uppercase tracking-wider text-white">Ready to chat</h3>
+              <p className="text-sm max-w-xs">Ask a question about your docs or help center.</p>
             </div>
           </div>
         ) : (
@@ -182,11 +176,11 @@ export default function ChatPage() {
                 }`}>
                   {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
-                
+
                 <div className={`p-4 rounded-2xl relative ${
-                  msg.role === "user" 
-                  ? "bg-white/10 border border-white/10 rounded-tr-none text-white" 
-                  : "bg-white/[0.03] border border-white/5 rounded-tl-none text-white/80"
+                  msg.role === "user"
+                    ? "bg-white/10 border border-white/10 rounded-tr-none text-white"
+                    : "bg-white/[0.03] border border-white/5 rounded-tl-none text-white/80"
                 }`}>
                   <div className="prose prose-invert prose-sm max-w-none text-inherit leading-relaxed">
                     <ReactMarkdown>
@@ -203,37 +197,36 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input Area */}
       <div className="p-6 bg-gradient-to-t from-black to-black/0">
-        <form 
+        <form
           onSubmit={handleSend}
           className="max-w-4xl mx-auto relative group"
         >
           <div className="absolute inset-0 bg-white/10 blur-xl opacity-0 group-focus-within:opacity-20 transition-opacity rounded-2xl" />
           <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-2 backdrop-blur-2xl">
-            <Button 
-                type="button" 
-                variant="ghost" 
-                size="icon" 
-                className="text-white/20 hover:text-white rounded-xl"
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-white/20 hover:text-white rounded-xl"
             >
               <Paperclip className="w-5 h-5" />
             </Button>
-            <Input 
+            <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask ${bot?.name || "AI"} anything...`}
+              placeholder="Ask a question..."
               disabled={isTyping}
               className="bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-white/20 h-12"
             />
             <div className="flex items-center gap-1 pr-2">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={!input.trim() || isTyping}
                 className={`transition-all rounded-xl ${
-                  input.trim() 
-                  ? "bg-white text-black hover:bg-white/90 scale-100" 
-                  : "bg-white/5 text-white/20 scale-95"
+                  input.trim()
+                    ? "bg-white text-black hover:bg-white/90 scale-100"
+                    : "bg-white/5 text-white/20 scale-95"
                 }`}
               >
                 {isTyping ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -241,13 +234,13 @@ export default function ChatPage() {
             </div>
           </div>
           <div className="mt-3 flex items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-white/20">
-            <span className="flex items-center gap-1.5"><Shield className="w-3 h-3" /> Secure Link</span>
-            <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> Knowledge Engine v1.0</span>
-            <span 
+            <span className="flex items-center gap-1.5"><Shield className="w-3 h-3" /> Secure connection</span>
+            <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> Sources synced</span>
+            <span
               className="flex items-center gap-1.5 cursor-pointer hover:text-white/40 transition-colors"
               onClick={() => setMessages([])}
             >
-              <Trash2 className="w-3 h-3" /> Clear Buffer
+              <Trash2 className="w-3 h-3" /> Clear chat
             </span>
           </div>
         </form>

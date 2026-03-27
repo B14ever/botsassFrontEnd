@@ -62,7 +62,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.627 0.265 303.89);
+  --primary: oklch(0.74 0.14 175);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -74,17 +74,17 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.627 0.265 303.89);
+  --ring: oklch(0.74 0.14 175);
   --radius: 1rem;
   
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.627 0.265 303.89);
+  --sidebar-primary: oklch(0.74 0.14 175);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.627 0.265 303.89);
+  --sidebar-ring: oklch(0.74 0.14 175);
 }
 
 .dark {
@@ -94,7 +94,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.627 0.265 303.89);
+  --primary: oklch(0.74 0.14 175);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -106,7 +106,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.627 0.265 303.89);
+  --ring: oklch(0.74 0.14 175);
 }
 
 .glass {
@@ -127,7 +127,7 @@
               linear-gradient(to bottom right, var(--primary), transparent) border-box;
   border: 1px solid transparent;
 }
-.text-glow { text-shadow: 0 0 30px rgba(124, 58, 237, 0.5); }
+.text-glow { text-shadow: 0 0 30px rgba(16, 185, 129, 0.45); }
 .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .card-hover:hover { transform: translateY(-5px) scale(1.01); border-color: rgba(255,255,255,0.2); background-color: rgba(255,255,255,0.1); box-shadow: 0 20px 40px -15px rgba(124, 58, 237, 0.2); }
 .animate-float { animation: float 6s ease-in-out infinite; }

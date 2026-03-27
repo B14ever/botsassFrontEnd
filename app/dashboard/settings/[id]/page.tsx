@@ -5,21 +5,20 @@ import { use, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Bot,
-  Settings,
   Palette,
-  MessageSquare,
   User,
   Save,
   ArrowLeft,
   Image as ImageIcon,
-  CheckCircle2,
   RefreshCcw,
   Sparkles,
   Globe,
   Upload,
   Plus,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Monitor,
+  Code2
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -36,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Sidebar from "@/components/shared/Sidebar";
 
 export default function BotSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -53,7 +53,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
     name: "",
     description: "",
     avatar_url: "",
-    primary_color: "#7c3aed",
+    primary_color: "#10b981",
     welcome_message: "Hello! How can I help you today?"
   });
 
@@ -63,7 +63,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
         name: bot.name || "",
         description: bot.description || "",
         avatar_url: bot.avatar_url || "",
-        primary_color: bot.primary_color || "#7c3aed",
+        primary_color: bot.primary_color || "#10b981",
         welcome_message: bot.welcome_message || "Hello! How can I help you today?"
       });
     }
@@ -81,7 +81,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
     setIngestionError(null);
     try {
       await api.post("/ingest/url", { bot_id: id, source: url });
-      toast.success("Learning from website started!");
+      toast.success("Website import started!");
       setUrl("");
     } catch (error: any) {
       const errMsg = error.response?.data?.error || "Ingestion failed";
@@ -104,7 +104,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
       await api.post("/ingest/pdf", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("Learning from PDF started!");
+      toast.success("PDF import started!");
       setPdfFile(null);
     } catch (error: any) {
       const errMsg = error.response?.data?.error || "Ingestion failed";
@@ -142,26 +142,45 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link 
-            href="/dashboard" 
-            className="text-sm text-white/40 hover:text-white flex items-center gap-2 mb-4 transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Dashboard
-          </Link>
-          <h1 className="text-4xl font-bold font-outfit text-white tracking-tight">
-            Customize <span className="gradient-text">Identity</span>
-          </h1>
-          <p className="text-white/40 mt-2 text-lg">
-            Configure how your AI bot looks and behaves on your website.
-          </p>
+    <Sidebar>
+      <div className="space-y-8 max-w-6xl mx-auto pb-20">
+        <div className="flex items-center justify-between">
+          <div>
+            <Link
+              href="/dashboard"
+              className="text-sm text-white/40 hover:text-white flex items-center gap-2 mb-4 transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Dashboard
+            </Link>
+            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+              <Sparkles className="w-3 h-3" />
+              Settings
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black font-outfit text-white tracking-tight">
+              Bot <span className="gradient-text">Settings</span>
+            </h1>
+            <p className="text-white/40 mt-3 text-lg max-w-2xl">
+              Customize the widget styling, message tone, and data sources.
+            </p>
+          </div>
+          <div className="hidden md:flex gap-3">
+            <Link href={`/dashboard/integrate/${id}`}>
+              <Button variant="outline" className="rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 h-12 px-6 transition-all">
+                <Code2 className="w-4 h-4 mr-2" />
+                Integrations
+              </Button>
+            </Link>
+            <Link href={`/widget-chat?botId=${id}`} target="_blank" rel="noreferrer">
+              <Button className="rounded-2xl h-12 px-6 bg-white text-black hover:bg-white/90 font-bold">
+                <Monitor className="w-4 h-4 mr-2" />
+                Preview Widget
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
@@ -182,7 +201,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                 <Input 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g. Matrix Assistant"
+                  placeholder="e.g. Support Bot"
                   className="bg-white/5 border-white/5 rounded-xl h-12 focus:ring-primary/20"
                 />
               </div>
@@ -229,7 +248,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div>
                   <CardTitle className="text-xl font-outfit text-white">Knowledge Base</CardTitle>
-                  <CardDescription className="text-white/40">Train your bot on additional data</CardDescription>
+                  <CardDescription className="text-white/40">Add sources for answers</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -270,13 +289,13 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                       className="bg-white/5 border-white/5 h-12 rounded-xl"
                     />
                   </div>
-                  <Button 
+                  <Button
                     type="button"
                     onClick={handleIngestURL}
                     disabled={!url || ingesting}
                     className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
                   >
-                    {ingesting ? "Analyzing Website..." : "Learn from URL"}
+                    {ingesting ? "Importing website..." : "Import from URL"}
                   </Button>
                 </TabsContent>
 
@@ -328,13 +347,13 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                       </>
                     )}
                   </div>
-                  <Button 
+                  <Button
                     type="button"
                     onClick={handleIngestPDF}
                     disabled={!pdfFile || ingesting}
                     className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
                   >
-                    {ingesting ? "Reading PDF..." : "Upload & Learn"}
+                    {ingesting ? "Uploading PDF..." : "Upload PDF"}
                   </Button>
                 </TabsContent>
               </Tabs>
@@ -342,8 +361,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
               <div className="mt-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-400 shrink-0" />
                 <p className="text-xs text-white/40 leading-relaxed">
-                  Your chatbot will re-analyze these sources and incorporate them into its memory automatically.
-                  This may take a few seconds.
+                  We re-index these sources so answers stay up to date. This may take a few seconds.
                 </p>
               </div>
             </CardContent>
@@ -432,7 +450,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                             )}
                         </div>
                         <div className="min-w-0">
-                            <h4 className="text-[11px] font-bold text-white truncate">{formData.name || "AI Assistant"}</h4>
+                            <h4 className="text-[11px] font-bold text-white truncate">{formData.name || "Support Bot"}</h4>
                             <div className="flex items-center gap-1">
                                 <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
                                 <span className="text-[8px] text-white/40 uppercase tracking-tighter">Online</span>
@@ -454,7 +472,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                         disabled={updateBotMutation.isPending}
                         className="w-full bg-white text-black hover:bg-white/90 font-bold h-12 rounded-2xl transition-all"
                     >
-                        {updateBotMutation.isPending ? "Saving Changes..." : "Save Identity"}
+                        {updateBotMutation.isPending ? "Saving Changes..." : "Save Changes"}
                         {!updateBotMutation.isPending && <Save className="w-4 h-4 ml-2" />}
                     </Button>
                     <p className="text-[10px] text-center text-white/20">
@@ -464,7 +482,8 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
         </div>
-      </form >
-    </div >
+        </form>
+      </div>
+    </Sidebar>
   );
 }

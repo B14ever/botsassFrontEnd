@@ -96,7 +96,7 @@ function WidgetChatContent() {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      toast.error("Failed to connect to AI");
+      toast.error("Connection failed. Please try again.");
     } finally {
       setIsLoading(false);
       setIsTyping(false);
@@ -123,10 +123,10 @@ function WidgetChatContent() {
           )}
         </div>
         <div className="min-w-0">
-          <h1 className="text-sm font-bold font-outfit truncate text-white">{settings?.name || "AI Assistant"}</h1>
+          <h1 className="text-sm font-bold font-outfit truncate text-white">{settings?.name || "Support Bot"}</h1>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Neural Link Active</span>
+            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Online</span>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ function WidgetChatContent() {
           <Input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your transmission..."
+            placeholder="Type your question..."
             className="h-12 bg-white/5 border-white/5 rounded-xl pr-12 focus:ring-0 focus:border-white/10 transition-all text-[13px] placeholder:text-white/20"
           />
           <button 
@@ -187,7 +187,7 @@ function WidgetChatContent() {
           </button>
         </form>
         <p className="text-[9px] text-center text-white/10 mt-3 flex items-center justify-center gap-1 uppercase tracking-tighter">
-            System Powered by <Sparkles className="w-2.5 h-2.5 text-white/20" /> BotSaas Neural Grid
+            Powered by <Sparkles className="w-2.5 h-2.5 text-white/20" /> KiboBot
         </p>
       </div>
     </div>

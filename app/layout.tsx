@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
-  title: "BotSaas | Premium AI Chatbots",
-  description: "Ingest PDFs and URLs to create custom AI chatbots in seconds.",
+  title: "KiboBot | Support Bots for Your Docs",
+  description: "Turn docs and FAQs into fast, trusted support answers.",
 };
 
 export default function RootLayout({

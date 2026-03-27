@@ -1,27 +1,25 @@
-"use strict";
+﻿"use strict";
 "use client";
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Bot, 
-  Plus, 
-  Search, 
-  MessageSquare, 
-  Settings, 
-  BarChart3, 
-  MoreVertical,
+import {
+  Bot,
+  Plus,
+  Search,
+  MessageSquare,
+  Settings,
   Calendar,
   Zap,
   FileText,
   Globe
 } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +42,7 @@ export default function DashboardPage() {
     },
   });
 
-  const filteredBots = bots?.filter((bot: any) => 
+  const filteredBots = bots?.filter((bot: any) =>
     bot.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
@@ -58,62 +56,61 @@ export default function DashboardPage() {
   return (
     <Sidebar>
       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
-        {/* Welcome Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-5xl font-black bg-gradient-to-r from-white via-white to-white/20 bg-clip-text text-transparent font-outfit tracking-tighter">
-              {getGreeting()}, <span className="text-primary">{session?.user?.name || 'Commander'}</span>
+              {getGreeting()}, <span className="text-primary">{session?.user?.name || "there"}</span>
             </h1>
-            <p className="text-white/40 font-medium tracking-wide">Your AI infrastructure is optimal. {filteredBots.length} active agents detected.</p>
+            <p className="text-white/40 font-medium tracking-wide">
+              You are all set. {filteredBots.length} active bots.
+            </p>
           </div>
           <Link href="/dashboard/create">
             <Button className="bg-white text-black hover:bg-white/90 font-black px-8 transition-all hover:scale-105 active:scale-95 h-14 rounded-2xl shadow-xl shadow-white/5">
               <Plus className="w-5 h-5 mr-2 stroke-[3px]" />
-              Initialize New Bot
+              New Bot
             </Button>
           </Link>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard 
-            title="Active Bots" 
-            value={bots?.length || 0} 
-            icon={<Bot className="w-5 h-5" />} 
+          <StatsCard
+            title="Active Bots"
+            value={bots?.length || 0}
+            icon={<Bot className="w-5 h-5" />}
             trend="+2 this month"
             color="text-blue-400"
           />
-          <StatsCard 
-            title="Total Chunks" 
-            value="85.4k" 
-            icon={<FileText className="w-5 h-5" />} 
-            trend="+12% from last week"
-            color="text-purple-400"
+          <StatsCard
+            title="Docs Indexed"
+            value="85.4k"
+            icon={<FileText className="w-5 h-5" />}
+            trend="Updated weekly"
+            color="text-emerald-400"
           />
-          <StatsCard 
-            title="Total Chats" 
-            value="1.2k" 
-            icon={<MessageSquare className="w-5 h-5" />} 
+          <StatsCard
+            title="Total Chats"
+            value="1.2k"
+            icon={<MessageSquare className="w-5 h-5" />}
             trend="+12% from last week"
-            color="text-green-400"
+            color="text-sky-400"
           />
-          <StatsCard 
-            title="Knowledge Tokens" 
-            value="450k" 
-            icon={<Zap className="w-5 h-5" />} 
-            trend="82% capacity"
-            color="text-orange-400"
+          <StatsCard
+            title="Storage Used"
+            value="82%"
+            icon={<Zap className="w-5 h-5" />}
+            trend="On track"
+            color="text-amber-400"
           />
         </div>
 
-        {/* Bot List Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white/80 font-outfit">Your Knowledge Bots</h2>
+            <h2 className="text-xl font-semibold text-white/80 font-outfit">Your Bots</h2>
             <div className="relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-              <Input 
-                placeholder="Search bots..." 
+              <Input
+                placeholder="Search bots..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-white/5 border-white/10 text-white focus:border-white/20 transition-all placeholder:text-white/20 rounded-xl"
@@ -135,7 +132,7 @@ export default function DashboardPage() {
                 <Bot className="w-16 h-16 text-white/10 mb-4" />
                 <h3 className="text-white/60 font-medium text-xl">No bots found</h3>
                 <p className="text-white/20 max-w-xs mx-auto mt-2">
-                  {searchTerm ? "Try a different search term" : "Create your first knowledge-powered AI bot to get started."}
+                  {searchTerm ? "Try a different search term" : "Create your first support bot to get started."}
                 </p>
                 {!searchTerm && (
                   <Link href="/dashboard/create" className="mt-8">
@@ -183,38 +180,38 @@ function BotCard({ bot, index }: { bot: any, index: number }) {
     >
       <Card className="glass-dark border-white/5 rounded-[2.5rem] overflow-hidden group hover:border-primary/30 transition-all relative card-hover">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        
+
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/20 group-hover:text-primary group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
               <Bot className="w-7 h-7" />
             </div>
             <div className="flex gap-1">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-               <div className="w-2 h-2 rounded-full bg-white/10" />
-               <div className="w-2 h-2 rounded-full bg-white/10" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+              <div className="w-2 h-2 rounded-full bg-white/10" />
+              <div className="w-2 h-2 rounded-full bg-white/10" />
             </div>
           </div>
           <div className="mt-6 space-y-2">
             <CardTitle className="text-2xl text-white font-black font-outfit tracking-tight">{bot.name}</CardTitle>
-            <CardDescription className="text-white/40 font-medium line-clamp-2 min-h-[3rem] leading-relaxed italic">
-              " {bot.description || "Specialized intelligence agent optimized for RAG tasks."} "
+            <CardDescription className="text-white/40 font-medium line-clamp-2 min-h-[3rem] leading-relaxed">
+              {bot.description || "Purpose-built support bot trained on your docs."}
             </CardDescription>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4 text-[10px] uppercase tracking-wider font-bold text-white/20">
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3 h-3" />
-              {format(new Date(bot.created_at), 'MMM d')}
+              {format(new Date(bot.created_at), "MMM d")}
             </div>
             <div className="flex items-center gap-1.5">
               <Zap className="w-3 h-3 text-yellow-500/50" />
               Ready
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <Link href={`/dashboard/chat/${bot.id}`} className="flex-1">
               <Button className="w-full bg-white text-black hover:bg-white/90 text-sm h-11 rounded-xl font-bold">
