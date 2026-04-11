@@ -2,7 +2,7 @@
 
 import { signOut } from 'next-auth/react';
 import { useAuthStore } from '@/store/authStore';
-import { Bot, LayoutDashboard, PlusCircle, Settings, LogOut, User, Menu, X } from 'lucide-react';
+import { Bot, LayoutDashboard, PlusCircle, Settings, LogOut, User, Menu, X, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Create Bot', href: '/dashboard/create', icon: PlusCircle },
   { name: 'Automation', href: '/dashboard/automation', icon: Bot },
+  { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

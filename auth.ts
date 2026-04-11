@@ -3,11 +3,23 @@ import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import axios from "axios"
 
+type AuthUser = {
+  id?: string
+  accessToken?: string
+}
+
+type SessionWithAccessToken = {
+  user: {
+    id?: string
+  }
+  accessToken?: string
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET,
     }),
     Credentials({
       name: "Credentials",
@@ -37,7 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
           }
           return null
-        } catch (error) {
+        } catch {
           return null
         }
       }
@@ -45,17 +57,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.accessToken = (user as any).accessToken 
+        const authUser = user as typeof user & AuthUser
+        token.id = authUser.id
+        token.accessToken = authUser.accessToken
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string
-        ;(session as any).accessToken = token.accessToken 
+        const sessionWithAccessToken = session as typeof session & SessionWithAccessToken
+        sessionWithAccessToken.user.id = token.id as string
+        sessionWithAccessToken.accessToken = token.accessToken as string | undefined
       }
       return session
     }

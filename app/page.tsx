@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -423,17 +423,19 @@ export default function Home() {
                 <h4 className="text-xl font-bold mb-2">{plan.name}</h4>
                 <p className="text-sm text-white/50 mb-4">{plan.blurb}</p>
                 <p className="text-sm text-white/70 font-medium">{plan.details}</p>
-                <Button
-                  size="lg"
-                  variant={plan.name === "Team" ? "default" : "ghost"}
-                  className={`mt-6 w-full h-12 rounded-xl font-bold ${
-                    plan.name === "Team"
-                      ? "bg-primary text-white hover:bg-primary/90"
-                      : "bg-white/5 text-white/70 border border-white/10"
-                  }`}
-                >
-                  {plan.name === "Enterprise" ? "Contact Sales" : "Choose Plan"}
-                </Button>
+                <Link href={plan.name === "Enterprise" ? "/register" : "/dashboard/billing"} className="w-full">
+                  <Button
+                    size="lg"
+                    variant={plan.name === "Team" ? "default" : "ghost"}
+                    className={`mt-6 w-full h-12 rounded-xl font-bold ${
+                      plan.name === "Team"
+                        ? "bg-primary text-white hover:bg-primary/90"
+                        : "bg-white/5 text-white/70 border border-white/10"
+                    }`}
+                  >
+                    {plan.name === "Enterprise" ? "Contact Sales" : "Choose Plan"}
+                  </Button>
+                </Link>
               </div>
             ))}
           </div>

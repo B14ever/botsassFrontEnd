@@ -13,21 +13,23 @@ function CallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get('code');
-    if (code) {
-      handleCallback(code);
+    if (!code) {
+      return;
     }
-  }, [searchParams]);
 
-  const handleCallback = async (code: string) => {
-    try {
-      const { data } = await api.post('/auth/google/callback', { code });
-      setAuth(data.user, data.token);
-      router.push('/dashboard');
-    } catch (err) {
-      console.error('Auth callback failed', err);
-      router.push('/login?error=auth_failed');
-    }
-  };
+    const handleCallback = async () => {
+      try {
+        const { data } = await api.post('/auth/google/callback', { code });
+        setAuth(data.user, data.token);
+        router.push('/dashboard');
+      } catch (err) {
+        console.error('Auth callback failed', err);
+        router.push('/login?error=auth_failed');
+      }
+    };
+
+    handleCallback();
+  }, [searchParams, router, setAuth]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
