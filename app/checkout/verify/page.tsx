@@ -11,6 +11,7 @@ function VerifyPaymentContent() {
   const searchParams = useSearchParams();
   const txRef = searchParams.get("tx_ref");
   const [status, setStatus] = useState<"pending" | "success" | "failed">(txRef ? "pending" : "failed");
+  const [planCode, setPlanCode] = useState<string | null>(null);
   const [message, setMessage] = useState(
     txRef ? "Verifying your transaction..." : "No transaction reference found."
   );
@@ -32,10 +33,11 @@ function VerifyPaymentContent() {
         }
 
         if (res.status === "success") {
+          setPlanCode(res.plan_code || null);
           setStatus("success");
-          setMessage("Payment successful. Your checkout has been confirmed.");
+          setMessage(`Payment successful. ${res.plan_code ? `${res.plan_code.toUpperCase()} is now active with improved reasoning quality.` : "Your checkout has been confirmed."}`);
           retryTimeout = setTimeout(() => {
-            router.push("/dashboard");
+            router.push("/dashboard/billing");
           }, 3000);
           return;
         }
@@ -120,6 +122,11 @@ function VerifyPaymentContent() {
           {status === "pending" ? "Verifying..." : status === "success" ? "Success!" : "Failed"}
         </h2>
         <p className="text-gray-400 mb-8">{message}</p>
+        {planCode ? (
+          <p className="mb-4 text-xs uppercase tracking-[0.2em] text-violet-300">
+            Activated plan: {planCode}
+          </p>
+        ) : null}
         {txRef && (
           <p className="mb-6 text-xs uppercase tracking-[0.2em] text-gray-500">
             Ref: {txRef}
@@ -129,10 +136,10 @@ function VerifyPaymentContent() {
         {status !== "pending" && (
           <div className="flex w-full flex-col gap-3">
             <Link
-              href="/dashboard"
+              href="/dashboard/billing"
               className="w-full py-3 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
             >
-              Return to Dashboard
+              Return to Billing
             </Link>
             {status === "failed" && (
               <Link

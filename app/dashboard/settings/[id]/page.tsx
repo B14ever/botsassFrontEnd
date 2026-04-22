@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import api from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/shared/Sidebar";
+import { getAxiosErrorMessage } from "@/lib/api/errors";
 
 export default function BotSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -74,17 +75,18 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
   const [ingestionError, setIngestionError] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
 
   const handleIngestURL = async () => {
     if (!url) return;
     setIngesting(true);
     setIngestionError(null);
     try {
-      await api.post("/ingest/url", { bot_id: id, source: url });
+      await api.post("/ingest/url", { bot_id: id, source: url, content_rights_confirmed: rightsConfirmed });
       toast.success("Website import started!");
       setUrl("");
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error || "Ingestion failed";
+    } catch (error: unknown) {
+      const errMsg = getAxiosErrorMessage(error, "Ingestion failed");
       setIngestionError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -99,6 +101,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
     const formData = new FormData();
     formData.append("file", pdfFile);
     formData.append("bot_id", id);
+    formData.append("content_rights_confirmed", String(rightsConfirmed));
 
     try {
       await api.post("/ingest/pdf", formData, {
@@ -106,8 +109,8 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
       });
       toast.success("PDF import started!");
       setPdfFile(null);
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error || "Ingestion failed";
+    } catch (error: unknown) {
+      const errMsg = getAxiosErrorMessage(error, "Ingestion failed");
       setIngestionError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -267,6 +270,18 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                 </motion.div>
               )}
 
+              <label className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rightsConfirmed}
+                  onChange={(event) => setRightsConfirmed(event.target.checked)}
+                  className="mt-1 accent-primary"
+                />
+                <div className="text-xs text-white/50 leading-relaxed">
+                  I confirm I have rights to use this website or PDF and understand crawlers should respect access rules.
+                </div>
+              </label>
+
               <Tabs defaultValue="url" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10 p-1 h-12 rounded-xl">
                   <TabsTrigger value="url" className="data-[state=active]:bg-white/10 rounded-lg">
@@ -292,7 +307,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   <Button
                     type="button"
                     onClick={handleIngestURL}
-                    disabled={!url || ingesting}
+                    disabled={!url || ingesting || !rightsConfirmed}
                     className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
                   >
                     {ingesting ? "Importing website..." : "Import from URL"}
@@ -350,7 +365,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   <Button
                     type="button"
                     onClick={handleIngestPDF}
-                    disabled={!pdfFile || ingesting}
+                    disabled={!pdfFile || ingesting || !rightsConfirmed}
                     className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
                   >
                     {ingesting ? "Uploading PDF..." : "Upload PDF"}

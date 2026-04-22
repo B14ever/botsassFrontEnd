@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { getAxiosErrorMessage } from "@/lib/api/errors";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -47,12 +48,12 @@ export default function RegisterPage() {
       });
 
       if (!res?.error) {
-        router.push("/dashboard");
+        router.push("/dashboard/create");
       } else {
         router.push("/login");
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Registration failed");
+    } catch (error: unknown) {
+      toast.error(getAxiosErrorMessage(error, "Registration failed"));
     } finally {
       setLoading(false);
     }

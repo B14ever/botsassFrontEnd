@@ -3,13 +3,13 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Send, Bot, User as UserIcon, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Send, Bot, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
+import { isLimitReachedError, type LimitReachedError } from "@/lib/api/errors";
 
 function WidgetChatContent() {
   const searchParams = useSearchParams();
@@ -18,6 +18,7 @@ function WidgetChatContent() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [limitError, setLimitError] = useState<LimitReachedError | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Read apiUrl from the URL param injected by widget.js (falls back to correct port 8081)
@@ -59,6 +60,7 @@ function WidgetChatContent() {
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
     setIsTyping(true);
+    setLimitError(null);
 
     try {
       const response = await fetch(`${apiUrl}/public/chat/ask`, {
@@ -66,6 +68,15 @@ function WidgetChatContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bot_id: botId, message: userMessage }),
       });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as Record<string, unknown>;
+        if (isLimitReachedError(payload)) {
+          setLimitError(payload);
+          throw new Error(`This bot has reached its ${payload.limit.replaceAll("_", " ")}.`);
+        }
+        throw new Error((payload.error as string) || "Failed to connect");
+      }
 
       if (!response.body) throw new Error("No response body");
 
@@ -136,6 +147,11 @@ function WidgetChatContent() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20"
       >
+        {limitError && (
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-white/70">
+            This bot has reached its current chat limit until {new Date(limitError.period_end).toLocaleDateString()}.
+          </div>
+        )}
         {messages.map((msg, i) => (
           <div 
             key={i} 

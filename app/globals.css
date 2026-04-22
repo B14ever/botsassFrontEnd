@@ -41,7 +41,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
+  --font-sans: var(--font-inter), "Noto Sans Ethiopic", "Abyssinica SIL", ui-sans-serif, system-ui;
   --font-inter: var(--font-inter);
 }
 
@@ -52,10 +52,17 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
   }
 }
 
 :root {
+  --font-inter: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-outfit: "Outfit", "Avenir Next", "Trebuchet MS", sans-serif;
+  --font-size-base: 15px;
+  --line-height-base: 1.5;
   --background: #0b1326;
   --foreground: #dae2fd;
   --card: #131b2e;

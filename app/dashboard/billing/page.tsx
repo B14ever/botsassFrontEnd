@@ -1,90 +1,132 @@
 "use client";
 
-import { PaymentButton } from "@/components/pricing/PaymentButton";
+import { useQuery } from "@tanstack/react-query";
+import { Gem, Globe2, MessageSquare, Sparkles } from "lucide-react";
 import Sidebar from "@/components/shared/Sidebar";
-import { Check, Shield, Gem } from "lucide-react";
-import { motion } from "framer-motion";
+import { PaymentButton } from "@/components/pricing/PaymentButton";
+import { fetchPlans, type Plan } from "@/lib/api/plans";
+import { fetchSubscription } from "@/lib/api/subscription";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BillingPage() {
+  const { data: plans = [] } = useQuery({
+    queryKey: ["plans"],
+    queryFn: fetchPlans,
+  });
+
+  const { data: subscription } = useQuery({
+    queryKey: ["subscription"],
+    queryFn: fetchSubscription,
+  });
+
   return (
     <Sidebar>
-      <div className="text-white selection:bg-violet-500/30 overflow-hidden relative pb-20 fade-in duration-700 animate-in slide-in-from-bottom-4">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]" />
+      <div className="space-y-10 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+            <Gem className="w-3 h-3" />
+            Plans & Limits
+          </div>
+          <h1 className="text-3xl font-black bg-gradient-to-r from-white via-white to-white/20 bg-clip-text text-transparent font-outfit tracking-tight">
+            Choose the right plan
+          </h1>
+          <p className="text-white/40 font-medium max-w-3xl">
+            Plans differ by usage limits, LLM class (free vs paid), and reasoning quality. Upgrades take effect after payment verification.
+          </p>
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 relative z-10 pt-10">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-md"
-            >
-              <Gem className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium tracking-wide text-gray-300">Billing & Checkout</span>
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-br from-white via-white/90 to-white/40 bg-clip-text text-transparent"
-            >
-              Complete Your Payment
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
-            >
-              Pay securely through Chapa to activate your BotSaas workspace and keep your customer support assistant live.
-            </motion.p>
-          </div>
+        {subscription ? (
+          <Card className="glass-dark border-white/10 rounded-[2.5rem]">
+            <CardHeader>
+              <CardTitle className="text-white font-outfit text-lg">Current subscription</CardTitle>
+              <CardDescription className="text-white/40">
+                {subscription.plan_code.toUpperCase()} plan active through {new Date(subscription.current_period_end).toLocaleDateString()}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center gap-3">
+              <span className="bg-primary/15 text-white border border-primary/20 rounded-full px-4 py-1.5 text-sm">
+                {subscription.plan_code.toUpperCase()}
+              </span>
+              <span className="bg-white/5 text-white/70 border border-white/10 rounded-full px-4 py-1.5 text-sm">
+                Status: {subscription.status}
+              </span>
+            </CardContent>
+          </Card>
+        ) : null}
 
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="max-w-lg mx-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Shield className="w-32 h-32 text-violet-500" />
-            </div>
-
-            <div className="relative z-10 text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">Starter Workspace</h2>
-              <div className="flex items-baseline justify-center gap-2 mb-4">
-                <span className="text-5xl font-extrabold tracking-tight">1000</span>
-                <span className="text-xl text-gray-400 font-medium">ETB</span>
-              </div>
-              <p className="text-gray-400 text-sm">A simple one-time checkout for your current plan setup.</p>
-            </div>
-
-            <ul className="space-y-4 mb-8">
-              {[
-                "Fast Chapa checkout",
-                "Secure hosted payment page",
-                "Automatic payment verification",
-                "Ready for tonight's launch"
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-300">
-                  <div className="bg-violet-500/20 p-1 rounded-full">
-                    <Check className="w-4 h-4 text-violet-400" />
-                  </div>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <div className="pt-6 border-t border-white/10">
-              <PaymentButton amount={1000} label="Checkout with Chapa" />
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {plans.map((plan) => (
+            <PlanCard key={plan.code} plan={plan} currentPlan={subscription?.plan_code} />
+          ))}
         </div>
       </div>
     </Sidebar>
+  );
+}
+
+function PlanCard({ plan, currentPlan }: { plan: Plan; currentPlan?: string }) {
+  const isCurrent = currentPlan === plan.code;
+  const canUpgrade = !isCurrent && plan.code !== "free";
+
+  return (
+    <Card className={`rounded-[2.5rem] overflow-hidden border ${isCurrent ? "border-primary/30 bg-primary/5" : "glass-dark border-white/10"}`}>
+      <CardHeader className="space-y-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white font-black text-lg font-outfit">{plan.name}</CardTitle>
+          {isCurrent ? <span className="bg-white text-black rounded-full px-3 py-1 text-sm font-semibold">Current</span> : null}
+        </div>
+        <CardDescription className="text-white/50 min-h-[3rem]">{plan.description}</CardDescription>
+        <div className="text-2xl font-black text-white">{plan.code === "free" ? "Free" : `${plan.price} ETB`}</div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <LimitStat label="Bots" value={String(plan.limits.bots)} />
+          <LimitStat label="Sources" value={String(plan.limits.sources)} />
+          <LimitStat label="Website pages" value={String(plan.limits.website_pages_per_month)} />
+          <LimitStat label="PDF pages" value={String(plan.limits.pdf_pages_per_month)} />
+          <LimitStat label="Monthly chat" value={String(plan.limits.chat_messages_per_month)} />
+          <LimitStat label="Reasoning quality" value={plan.reasoning_quality} />
+        </div>
+
+        <div className="space-y-3 text-sm text-white/70">
+          <Feature icon={<MessageSquare className="w-4 h-4" />} text="Grounded chat responses with explicit uncertainty handling" />
+          <Feature icon={<Globe2 className="w-4 h-4" />} text={`LLM class: ${plan.llm_class === "paid" ? "Paid LLMs" : "Free LLMs"}`} />
+          <Feature icon={<Sparkles className="w-4 h-4" />} text={`Reasoning tier: ${plan.reasoning_quality}`} />
+        </div>
+
+        {isCurrent ? (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+            You are already on this plan.
+          </div>
+        ) : canUpgrade ? (
+          <PaymentButton planCode={plan.code as "standard" | "pro"} label={`Upgrade to ${plan.name}`} />
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+            Free is always available for new workspaces.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LimitStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-black">{label}</div>
+      <div className="mt-1 text-base font-bold text-white">{value}</div>
+    </div>
+  );
+}
+
+function Feature({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-primary shrink-0">
+        {icon}
+      </div>
+      <div className="leading-relaxed">{text}</div>
+    </div>
   );
 }

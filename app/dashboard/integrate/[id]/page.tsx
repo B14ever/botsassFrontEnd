@@ -2,7 +2,6 @@
 
 import { use, useState } from "react";
 import {
-  Code2,
   Copy,
   Check,
   Globe,
@@ -12,7 +11,6 @@ import {
   Settings,
   ExternalLink,
   Sparkles,
-  Link as LinkIcon,
   Monitor
 } from "lucide-react";
 import Link from "next/link";

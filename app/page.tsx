@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { fetchPlans } from "@/lib/api/plans";
 import {
   Bot,
   Zap,
@@ -22,6 +24,15 @@ import {
 } from "lucide-react";
 
 export default function Home() {
+  const { data: plans = [] } = useQuery({
+    queryKey: ["public-plans"],
+    queryFn: fetchPlans,
+  });
+  const orderedPlans = [...plans].sort((a, b) => {
+    const order = { free: 0, standard: 1, pro: 2 } as const;
+    return order[a.code] - order[b.code];
+  });
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -395,49 +406,52 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                name: "Starter",
-                blurb: "For early teams validating their support flow.",
-                details: "1 workspace, 1 bot, basic analytics, email support."
-              },
-              {
-                name: "Team",
-                blurb: "For growing products with a busy help center.",
-                details: "Multiple bots, roles and permissions, advanced analytics."
-              },
-              {
-                name: "Enterprise",
-                blurb: "For larger teams with custom needs.",
-                details: "SSO, dedicated onboarding, custom data policies."
-              }
-            ].map((plan, i) => (
-              <div
-                key={i}
-                className={`p-8 rounded-[2rem] border bg-white/[0.02] ${
-                  plan.name === "Team"
-                    ? "border-primary/40 shadow-2xl shadow-primary/10"
-                    : "border-white/5"
-                }`}
-              >
-                <h4 className="text-xl font-bold mb-2">{plan.name}</h4>
-                <p className="text-sm text-white/50 mb-4">{plan.blurb}</p>
-                <p className="text-sm text-white/70 font-medium">{plan.details}</p>
-                <Link href={plan.name === "Enterprise" ? "/register" : "/dashboard/billing"} className="w-full">
-                  <Button
-                    size="lg"
-                    variant={plan.name === "Team" ? "default" : "ghost"}
-                    className={`mt-6 w-full h-12 rounded-xl font-bold ${
-                      plan.name === "Team"
-                        ? "bg-primary text-white hover:bg-primary/90"
-                        : "bg-white/5 text-white/70 border border-white/10"
+            {orderedPlans.length ? (
+              orderedPlans.map((plan) => {
+                const isHighlighted = plan.code === "standard";
+                const priceLabel = plan.code === "free" || plan.price === "0" ? "Free" : `${plan.price} ETB`;
+                return (
+                  <div
+                    key={plan.code}
+                    className={`p-8 rounded-[2rem] border bg-white/[0.02] ${
+                      isHighlighted
+                        ? "border-primary/40 shadow-2xl shadow-primary/10"
+                        : "border-white/5"
                     }`}
                   >
-                    {plan.name === "Enterprise" ? "Contact Sales" : "Choose Plan"}
-                  </Button>
-                </Link>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xl font-bold">{plan.name}</h4>
+                      {isHighlighted ? (
+                        <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-black">Popular</span>
+                      ) : null}
+                    </div>
+                    <p className="text-sm text-white/50 mt-2">{plan.description}</p>
+                    <div className="mt-5 text-3xl font-black text-white">{priceLabel}</div>
+                    <div className="mt-4 space-y-2 text-sm text-white/60">
+                      <div>LLM class: {plan.llm_class === "paid" ? "Paid LLMs" : "Free LLMs"}</div>
+                      <div>Reasoning quality: {plan.reasoning_quality}</div>
+                    </div>
+                    <Link href="/register" className="w-full">
+                      <Button
+                        size="lg"
+                        variant={isHighlighted ? "default" : "ghost"}
+                        className={`mt-6 w-full h-12 rounded-xl font-bold ${
+                          isHighlighted
+                            ? "bg-primary text-white hover:bg-primary/90"
+                            : "bg-white/5 text-white/70 border border-white/10"
+                        }`}
+                      >
+                        {plan.code === "free" ? "Start Free" : "Get Started"}
+                      </Button>
+                    </Link>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-full rounded-[2rem] border border-white/10 bg-white/[0.02] p-8 text-center text-white/60">
+                Pricing is loading. Please refresh if it does not appear.
               </div>
-            ))}
+            )}
           </div>
         </section>
 
