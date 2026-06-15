@@ -77,6 +77,85 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
 
+  // Channel State
+  const { data: channelsData = [], refetch: refetchChannels } = useQuery<any[]>({
+    queryKey: ["bot-channels", id],
+    queryFn: async () => {
+      const resp = await api.get(`/bots/${id}/channels`);
+      return resp.data || [];
+    },
+  });
+  const channels = channelsData || [];
+
+  const [telegramToken, setTelegramToken] = useState("");
+  const [whatsappPhoneId, setWhatsappPhoneId] = useState("");
+  const [whatsappVerifyToken, setWhatsappVerifyToken] = useState("");
+  const [whatsappAccessToken, setWhatsappAccessToken] = useState("");
+  const [isConnectingTelegram, setIsConnectingTelegram] = useState(false);
+  const [isConnectingWhatsApp, setIsConnectingWhatsApp] = useState(false);
+
+  const handleConnectTelegram = async () => {
+    if (!telegramToken.trim()) {
+      toast.error("Please enter a Telegram Bot Token");
+      return;
+    }
+    setIsConnectingTelegram(true);
+    try {
+      await api.post(`/bots/${id}/channels`, {
+        type: "telegram",
+        config: { bot_token: telegramToken.trim() }
+      });
+      toast.success("Telegram channel connected successfully!");
+      setTelegramToken("");
+      refetchChannels();
+      queryClient.invalidateQueries({ queryKey: ["usage"] });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to connect Telegram");
+    } finally {
+      setIsConnectingTelegram(false);
+    }
+  };
+
+  const handleConnectWhatsApp = async () => {
+    if (!whatsappPhoneId.trim() || !whatsappVerifyToken.trim() || !whatsappAccessToken.trim()) {
+      toast.error("Please fill in all WhatsApp fields");
+      return;
+    }
+    setIsConnectingWhatsApp(true);
+    try {
+      await api.post(`/bots/${id}/channels`, {
+        type: "whatsapp",
+        config: {
+          phone_number_id: whatsappPhoneId.trim(),
+          verify_token: whatsappVerifyToken.trim(),
+          access_token: whatsappAccessToken.trim()
+        }
+      });
+      toast.success("WhatsApp channel connected successfully!");
+      setWhatsappPhoneId("");
+      setWhatsappVerifyToken("");
+      setWhatsappAccessToken("");
+      refetchChannels();
+      queryClient.invalidateQueries({ queryKey: ["usage"] });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to connect WhatsApp");
+    } finally {
+      setIsConnectingWhatsApp(false);
+    }
+  };
+
+  const handleDisconnectChannel = async (channelId: string) => {
+    if (!confirm("Are you sure you want to disconnect this channel? Webhook connections will be removed.")) return;
+    try {
+      await api.delete(`/bots/${id}/channels/${channelId}`);
+      toast.success("Channel disconnected successfully");
+      refetchChannels();
+      queryClient.invalidateQueries({ queryKey: ["usage"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to disconnect channel");
+    }
+  };
+
   const handleIngestURL = async () => {
     if (!url) return;
     setIngesting(true);
@@ -381,6 +460,186 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
               </div>
             </CardContent>
           </Card>
+
+          {/* Multi-Channel Deployments */}
+          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                  <Monitor className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-outfit text-white">Multi-Channel Deployments</CardTitle>
+                  <CardDescription className="text-white/40">Deploy your chatbot on Telegram and WhatsApp</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Telegram Section */}
+              <div className="space-y-4 border-b border-white/5 pb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider font-outfit">Telegram Bot</h4>
+                  </div>
+                  {channels.some(c => c.type === 'telegram') ? (
+                    <span className="text-[10px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold uppercase px-2 py-0.5 rounded-md">
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-white/5 border border-white/10 text-white/40 font-bold uppercase px-2 py-0.5 rounded-md">
+                      Disconnected
+                    </span>
+                  )}
+                </div>
+
+                {channels.some(c => c.type === 'telegram') ? (
+                  (() => {
+                    const tgChannel = channels.find(c => c.type === 'telegram');
+                    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
+                    const hookUrl = `${backendUrl}/webhooks/telegram/${tgChannel.id}`;
+                    return (
+                      <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-white/40 uppercase">Webhook Endpoint URL</span>
+                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                            {hookUrl}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => handleDisconnectChannel(tgChannel.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold rounded-xl text-xs h-9 px-4 mt-1"
+                        >
+                          Disconnect Telegram Bot
+                        </Button>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-white/60 text-xs">Telegram Bot Token</Label>
+                      <Input
+                        type="password"
+                        placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                        value={telegramToken}
+                        onChange={(e) => setTelegramToken(e.target.value)}
+                        className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                      />
+                      <p className="text-[10px] text-white/30">Get this token from @BotFather on Telegram.</p>
+                    </div>
+                    <Button
+                      type="button"
+                      disabled={isConnectingTelegram}
+                      onClick={handleConnectTelegram}
+                      className="bg-primary text-black hover:bg-primary/95 font-bold h-10 px-5 rounded-xl text-xs"
+                    >
+                      {isConnectingTelegram ? "Connecting..." : "Connect Telegram"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* WhatsApp Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider font-outfit">WhatsApp Cloud API</h4>
+                  </div>
+                  {channels.some(c => c.type === 'whatsapp') ? (
+                    <span className="text-[10px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold uppercase px-2 py-0.5 rounded-md">
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-white/5 border border-white/10 text-white/40 font-bold uppercase px-2 py-0.5 rounded-md">
+                      Disconnected
+                    </span>
+                  )}
+                </div>
+
+                {channels.some(c => c.type === 'whatsapp') ? (
+                  (() => {
+                    const waChannel = channels.find(c => c.type === 'whatsapp');
+                    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
+                    const hookUrl = `${backendUrl}/webhooks/whatsapp/${waChannel.id}`;
+                    const verifyToken = waChannel.config?.verify_token || "configured_verify_token";
+                    return (
+                      <div className="space-y-3.5 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-white/40 uppercase">Webhook Callback URL</span>
+                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                            {hookUrl}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-white/40 uppercase">Verify Token</span>
+                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                            {verifyToken}
+                          </div>
+                        </div>
+                        <p className="text-[10px] leading-relaxed text-white/30">
+                          Configure these parameters under the Webhooks settings in your Meta App Developer Dashboard to establish connection.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => handleDisconnectChannel(waChannel.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold rounded-xl text-xs h-9 px-4"
+                        >
+                          Disconnect WhatsApp
+                        </Button>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-white/60 text-xs">Phone Number ID</Label>
+                        <Input
+                          placeholder="e.g. 109283920283722"
+                          value={whatsappPhoneId}
+                          onChange={(e) => setWhatsappPhoneId(e.target.value)}
+                          className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-white/60 text-xs">Webhook Verify Token</Label>
+                        <Input
+                          placeholder="Choose any random string (e.g. my-verify-token)"
+                          value={whatsappVerifyToken}
+                          onChange={(e) => setWhatsappVerifyToken(e.target.value)}
+                          className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-white/60 text-xs">System User Access Token</Label>
+                      <Input
+                        type="password"
+                        placeholder="EAABw..."
+                        value={whatsappAccessToken}
+                        onChange={(e) => setWhatsappAccessToken(e.target.value)}
+                        className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      disabled={isConnectingWhatsApp}
+                      onClick={handleConnectWhatsApp}
+                      className="bg-primary text-black hover:bg-primary/95 font-bold h-10 px-5 rounded-xl text-xs"
+                    >
+                      {isConnectingWhatsApp ? "Connecting..." : "Connect WhatsApp"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-3">

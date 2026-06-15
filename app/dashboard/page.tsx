@@ -44,7 +44,7 @@ export default function DashboardPage() {
     queryFn: fetchUsage,
   });
 
-  const filteredBots = bots.filter((bot) => bot.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredBots = bots?.filter((bot) => bot.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <Sidebar>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
               Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="h-48 rounded-3xl bg-white/5 animate-pulse border border-white/10" />
               ))
-            ) : filteredBots.length > 0 ? (
+            ) : filteredBots?.length > 0 ? (
               filteredBots.map((bot) => <BotCard key={bot.id} bot={bot} />)
             ) : (
               <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-white/10 rounded-[2rem] bg-white/[0.02]">

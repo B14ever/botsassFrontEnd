@@ -86,6 +86,10 @@ function PlanCard({ plan, currentPlan }: { plan: Plan; currentPlan?: string }) {
           <LimitStat label="Website pages" value={String(plan.limits.website_pages_per_month)} />
           <LimitStat label="PDF pages" value={String(plan.limits.pdf_pages_per_month)} />
           <LimitStat label="Monthly chat" value={String(plan.limits.chat_messages_per_month)} />
+          <LimitStat label="Projects Workspace" value={String(plan.limits.projects)} />
+          <LimitStat label="Project Messages" value={String(plan.limits.project_messages)} />
+          <LimitStat label="Reports & PPTX Gen" value={String(plan.limits.reports_generated)} />
+          <LimitStat label="Social Channels" value={String(plan.limits.channels_connected)} />
           <LimitStat label="Reasoning quality" value={plan.reasoning_quality} />
         </div>
 

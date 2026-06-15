@@ -13,6 +13,10 @@ export type Plan = {
     website_pages_per_month: number;
     pdf_pages_per_month: number;
     chat_messages_per_month: number;
+    projects: number;
+    project_messages: number;
+    reports_generated: number;
+    channels_connected: number;
   };
 };
 
