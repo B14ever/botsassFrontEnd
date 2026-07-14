@@ -11,7 +11,6 @@ import {
   ChevronRight,
   FileText,
   Globe,
-  Languages,
   ShieldCheck,
   Sparkles,
   Upload,
@@ -44,7 +43,6 @@ export default function CreateBotPage() {
   const [botId, setBotId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [preferredLanguage, setPreferredLanguage] = useState<"en" | "am">("en");
   const [url, setUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
@@ -105,7 +103,6 @@ export default function CreateBotPage() {
       const response = await api.post<{ id: string }>("/bots/", {
         name: name.trim(),
         description: description.trim(),
-        preferred_language: preferredLanguage,
       });
       setBotId(response.data.id);
       toast.success("Bot created. Add one source to make it useful.");
@@ -212,7 +209,7 @@ export default function CreateBotPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
           <div className="space-y-4">
-            <StepItem active={!botId} completed={Boolean(botId)} title="Create bot" description="Name it and set English or Amharic as the preferred language." />
+            <StepItem active={!botId} completed={Boolean(botId)} title="Create bot" description="Name your bot and give it an internal description." />
             <StepItem active={Boolean(botId) && !isPolling} completed={Boolean(knowledge?.ready)} title="Connect knowledge" description="Add one website or PDF and confirm you have rights to use it." />
             <StepItem active={isPolling} completed={Boolean(knowledge?.ready)} title="Ready to chat" description="We check indexing progress and move you to live chat when the bot is ready." />
           </div>
@@ -250,12 +247,7 @@ export default function CreateBotPage() {
                         />
                       </Field>
 
-                      <Field label="Preferred language">
-                        <div className="grid grid-cols-2 gap-3">
-                          <LanguageButton active={preferredLanguage === "en"} onClick={() => setPreferredLanguage("en")} label="English" />
-                          <LanguageButton active={preferredLanguage === "am"} onClick={() => setPreferredLanguage("am")} label="Amharic" />
-                        </div>
-                      </Field>
+
 
                       {limitError && <LimitCard limitError={limitError} onUpgrade={() => router.push("/dashboard/billing")} />}
 
@@ -413,12 +405,7 @@ export default function CreateBotPage() {
                       </TabsContent>
                     </Tabs>
 
-                    <div className="rounded-3xl bg-primary/5 border border-primary/10 p-5 flex gap-4 items-start">
-                      <Languages className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <p className="text-sm text-white/50 leading-relaxed">
-                        Preferred language is set to <span className="text-white font-semibold">{preferredLanguage === "am" ? "Amharic" : "English"}</span>. You can update it later from bot settings too.
-                      </p>
-                    </div>
+
                   </CardContent>
                 </Card>
               </motion.div>
@@ -455,17 +442,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function LanguageButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-14 rounded-2xl border font-bold transition-all ${active ? "border-primary bg-primary/10 text-white" : "border-white/10 bg-white/[0.03] text-white/50 hover:text-white"}`}
-    >
-      {label}
-    </button>
-  );
-}
+
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (

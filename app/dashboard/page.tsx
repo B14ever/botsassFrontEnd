@@ -188,9 +188,6 @@ function BotCard({ bot }: { bot: BotRecord }) {
           <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-primary">
             <Bot className="w-6 h-6" />
           </div>
-          <div className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40 font-black">
-            {bot.preferred_language === "am" ? "Amharic" : "English"}
-          </div>
         </div>
         <div>
           <CardTitle className="text-white text-lg font-black font-outfit">{bot.name}</CardTitle>
