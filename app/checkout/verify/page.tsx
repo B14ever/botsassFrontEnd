@@ -87,7 +87,7 @@ function VerifyPaymentContent() {
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", damping: 20, stiffness: 100 }}
-        className="bg-white/5 backdrop-blur-lg border border-white/10 p-10 rounded-3xl shadow-2xl max-w-md w-full flex flex-col items-center"
+        className="bg-secondary backdrop-blur-lg border border-border p-10 rounded-lg shadow-none max-w-md w-full flex flex-col items-center"
       >
         {status === "pending" && (
           <motion.div
@@ -137,14 +137,14 @@ function VerifyPaymentContent() {
           <div className="flex w-full flex-col gap-3">
             <Link
               href="/dashboard/billing"
-              className="w-full py-3 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
+              className="w-full py-3 px-6 rounded-xl bg-secondary/80 hover:bg-white/20 text-white font-medium transition-colors"
             >
               Return to Billing
             </Link>
             {status === "failed" && (
               <Link
                 href="/dashboard/billing"
-                className="w-full py-3 px-6 rounded-xl border border-white/10 hover:bg-white/5 text-white font-medium transition-colors"
+                className="w-full py-3 px-6 rounded-xl border border-border hover:bg-secondary text-white font-medium transition-colors"
               >
                 Try Payment Again
               </Link>

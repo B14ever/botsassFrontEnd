@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Send, Bot, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import axios from "axios";
@@ -117,14 +118,14 @@ function WidgetChatContent() {
   const primaryColor = settings?.primary_color || "#7c3aed";
 
   return (
-    <div className="flex flex-col h-screen bg-[#09090b] text-white font-sans selection:bg-primary/30">
+    <div className="flex flex-col h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       {/* Header */}
       <div 
-        className="p-4 border-b border-white/10 flex items-center gap-3"
+        className="p-4 border-b border-border flex items-center gap-3"
         style={{ backgroundColor: `${primaryColor}1a` }}
       >
         <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden border border-white/10 shadow-lg"
+          className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden border border-border shadow-lg"
           style={{ backgroundColor: primaryColor }}
         >
           {settings?.avatar_url ? (
@@ -137,7 +138,7 @@ function WidgetChatContent() {
           <h1 className="text-sm font-bold font-outfit truncate text-white">{settings?.name || "Support Bot"}</h1>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-            <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Online</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Online</span>
           </div>
         </div>
       </div>
@@ -145,10 +146,10 @@ function WidgetChatContent() {
       {/* Messages */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20"
+        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-muted/10"
       >
         {limitError && (
-          <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-white/70">
+          <div className="rounded-md border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-white/70">
             This bot has reached its current chat limit until {new Date(limitError.period_end).toLocaleDateString()}.
           </div>
         )}
@@ -158,10 +159,10 @@ function WidgetChatContent() {
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div 
-              className={`max-w-[85%] p-3.5 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all animate-in slide-in-from-bottom-2 ${
+              className={`max-w-[85%] p-3.5 rounded-md text-[13px] leading-relaxed shadow-sm transition-all animate-in slide-in-from-bottom-2 ${
                 msg.role === "user" 
                 ? "text-white rounded-tr-none" 
-                : "bg-white/5 border border-white/5 rounded-tl-none text-white/90"
+                : "bg-secondary border border-border rounded-tl-none text-white/90"
               }`}
               style={msg.role === "user" ? { backgroundColor: primaryColor } : {}}
             >
@@ -173,7 +174,7 @@ function WidgetChatContent() {
         ))}
         {isTyping && (
            <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2">
-              <div className="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-tl-none">
+              <div className="bg-secondary border border-border p-4 rounded-md rounded-tl-none">
                 <div className="flex gap-1.5">
                     <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-duration:0.6s]" />
                     <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
@@ -185,25 +186,25 @@ function WidgetChatContent() {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-black/40 border-t border-white/5 backdrop-blur-xl">
+      <div className="p-4 bg-background/40 border-t border-border backdrop-blur-xl">
         <form onSubmit={handleSend} className="relative">
           <Input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your question..."
-            className="h-12 bg-white/5 border-white/5 rounded-xl pr-12 focus:ring-0 focus:border-white/10 transition-all text-[13px] placeholder:text-white/20"
+            className="h-12 bg-secondary border-border rounded-xl pr-12 focus:ring-0 focus:border-border/80 transition-all text-[13px] placeholder:text-muted-foreground/50"
           />
-          <button 
+          <Button 
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-20 active:scale-95"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-20 active:scale-95 p-0 min-w-0"
             style={{ backgroundColor: primaryColor }}
           >
             <Send className="w-4 h-4 text-white" />
-          </button>
+          </Button>
         </form>
         <p className="text-[9px] text-center text-white/10 mt-3 flex items-center justify-center gap-1 uppercase tracking-tighter">
-            Powered by <Sparkles className="w-2.5 h-2.5 text-white/20" /> KiboBot
+            Powered by <Sparkles className="w-2.5 h-2.5 text-muted-foreground/50" /> Redas
         </p>
       </div>
     </div>
@@ -212,7 +213,7 @@ function WidgetChatContent() {
 
 export default function WidgetChatPage() {
   return (
-    <Suspense fallback={<div className="h-screen bg-[#09090b]" />}>
+    <Suspense fallback={<div className="h-screen bg-background" />}>
       <WidgetChatContent />
     </Suspense>
   );

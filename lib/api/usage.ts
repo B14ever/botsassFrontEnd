@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 
 export type UsageSnapshot = {
-  plan_code: "free" | "standard" | "pro";
+  plan_code: "free" | "standard" | "team" | "pro";
   period_start: string;
   period_end: string;
   limits: {
@@ -30,5 +30,19 @@ export type UsageSnapshot = {
 
 export async function fetchUsage(): Promise<UsageSnapshot> {
   const response = await api.get<UsageSnapshot>("/usage/");
+  return response.data;
+}
+
+export type UsageAnalytics = {
+  avg_response_time: number;
+  resolution_rate: number;
+  daily_counts: Array<{ date: string; count: number }>;
+  bot_counts: Array<{ bot_id: string; bot_name: string; count: number }>;
+  billing_period_start: string;
+  billing_period_end: string;
+};
+
+export async function fetchUsageAnalytics(): Promise<UsageAnalytics> {
+  const response = await api.get<UsageAnalytics>("/usage/analytics");
   return response.data;
 }

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 "use client";
 
 import { useState } from "react";
@@ -6,29 +6,19 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Bot, Mail, Lock, User, ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { getAxiosErrorMessage } from "@/lib/api/errors";
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +38,7 @@ export default function RegisterPage() {
       });
 
       if (!res?.error) {
-        router.push("/dashboard/create");
+        router.push("/onboarding");
       } else {
         router.push("/login");
       }
@@ -60,100 +50,112 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle />
+      </div>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-md z-10"
+        className="w-full max-w-md space-y-6 bg-card border border-border rounded-xl p-8 md:p-10"
       >
-        <Card className="glass-dark border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="text-center space-y-3">
+          <div className="flex justify-center mb-2">
+            <img src="/redas_logo.png" className="h-10 object-contain" alt="Redas Logo" />
+          </div>
+          <h1 className="text-3xl font-bold font-outfit tracking-tight text-foreground">Create your account</h1>
+          <p className="text-muted-foreground font-medium text-sm">Start a workspace for your support team</p>
+        </div>
 
-          <CardHeader className="text-center pt-10">
-            <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-primary/40 rotate-12">
-              <Bot className="w-10 h-10 text-white" />
-            </div>
-            <CardTitle className="text-4xl font-black font-outfit tracking-tighter text-white">Create your account</CardTitle>
-            <CardDescription className="text-white/40 font-medium mt-2">
-              Start a workspace for your support team.
-            </CardDescription>
-          </CardHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+            <Input
+              type="text"
+              placeholder="Full name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-4 text-foreground placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-          <CardContent className="px-10">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type="text"
-                    placeholder="Full name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus:bg-white/10 focus:border-white/10 transition-all placeholder:text-white/20 text-white"
-                  />
-                </div>
-              </div>
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-4 text-foreground placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-              <div className="space-y-2">
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus:bg-white/10 focus:border-white/10 transition-all placeholder:text-white/20 text-white"
-                  />
-                </div>
-              </div>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Create password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-11 text-foreground placeholder:text-muted-foreground/50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10 p-1"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
 
-              <div className="space-y-2">
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
-                  <Input
-                    type="password"
-                    placeholder="Create password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="h-14 pl-12 bg-white/5 border-white/5 rounded-2xl focus:bg-white/10 focus:border-white/10 transition-all placeholder:text-white/20 text-white"
-                  />
-                </div>
-              </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-md transition-all flex items-center justify-center gap-2 group disabled:opacity-50 text-base"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin w-5 h-5" />
+            ) : (
+              <>
+                Create account <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </>
+            )}
+          </Button>
+        </form>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xl transition-all group flex items-center justify-center gap-3 shadow-2xl shadow-primary/20"
-              >
-                {loading ? <span className="animate-spin w-6 h-6 border-b-2 border-white rounded-full" /> : "Create account"}
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </form>
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          </div>
+        </div>
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center gap-2 p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
-                <ShieldCheck className="w-5 h-5 text-green-500/50" />
-                <span className="text-[10px] uppercase tracking-widest font-bold text-white/40">Secure</span>
-              </div>
-              <div className="flex flex-col items-center gap-2 p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
-                <Sparkles className="w-5 h-5 text-blue-500/50" />
-                <span className="text-[10px] uppercase tracking-widest font-bold text-white/40">Team-ready</span>
-              </div>
-            </div>
-          </CardContent>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          className="w-full bg-transparent text-foreground font-medium h-12 rounded-md hover:bg-muted transition-all flex items-center justify-center gap-2 px-4 border-border"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            <path fill="none" d="M0 0h48v48H0z"/>
+          </svg>
+          Sign up with Google
+        </Button>
 
-          <CardFooter className="justify-center pb-10">
-            <p className="text-white/30 text-sm">
-              Already have an account?{" "}
-              <Link href="/login" className="text-white hover:underline font-semibold ml-1 transition-all hover:text-primary">
-                Log in
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
+        <div className="flex justify-center pt-2">
+          <p className="text-muted-foreground text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline font-semibold ml-1 transition-all">
+              Log in
+            </Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

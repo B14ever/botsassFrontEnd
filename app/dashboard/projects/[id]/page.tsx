@@ -503,31 +503,31 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         {/* Left Workspace Panel */}
         <div className="w-full xl:w-[320px] flex flex-col shrink-0 gap-6 overflow-y-auto custom-scrollbar">
           {/* Project Details */}
-          <div className="glass-dark border border-white/10 p-5 rounded-[2rem] space-y-4">
+          <div className="bg-card border border-border p-5 rounded-lg space-y-4">
             <Button
               variant="ghost"
               onClick={() => router.push("/dashboard/projects")}
-              className="text-white/40 hover:text-white hover:bg-white/5 p-0 h-auto font-bold flex items-center text-xs"
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary p-0 h-auto font-bold flex items-center text-xs"
             >
               <ArrowLeft className="w-4 h-4 mr-1.5" />
               Back to Projects
             </Button>
             <div>
-              <h2 className="text-white text-xl font-black font-outfit truncate">{project?.name || "Loading..."}</h2>
-              <p className="text-white/30 text-xs mt-1 leading-relaxed line-clamp-2">
+              <h2 className="text-foreground text-xl font-black font-outfit truncate">{project?.name || "Loading..."}</h2>
+              <p className="text-muted-foreground/60 text-xs mt-1 leading-relaxed line-clamp-2">
                 {project?.description || "Collaborative AI research workspace folder."}
               </p>
             </div>
           </div>
 
           {/* Chat Threads */}
-          <div className="glass-dark border border-white/10 p-5 rounded-[2rem] flex-1 flex flex-col min-h-[200px]">
+          <div className="bg-card border border-border p-5 rounded-lg flex-1 flex flex-col min-h-[200px]">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <span className="text-xs font-black uppercase tracking-widest text-white/50 font-outfit">Chats ({chats.length})</span>
+              <span className="text-xs font-black uppercase tracking-widest text-muted-foreground font-outfit">Chats ({chats.length})</span>
               <Button
                 variant="ghost"
                 onClick={handleCreateChat}
-                className="text-primary hover:text-white p-1 hover:bg-white/5 rounded-lg h-7 text-xs font-bold"
+                className="text-primary hover:text-foreground p-1 hover:bg-secondary rounded-lg h-7 text-xs font-bold"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 New Chat
@@ -543,8 +543,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       onClick={() => setActiveChatId(c.id)}
                       className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group ${
                         isActive
-                          ? "bg-primary/10 border-primary/20 text-white font-bold"
-                          : "bg-white/[0.01] border-white/5 text-white/50 hover:text-white hover:bg-white/[0.03]"
+                          ? "bg-primary/10 border-primary/20 text-foreground font-bold"
+                          : "bg-secondary/10 border-border text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -559,7 +559,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                             deleteChatMutation.mutate(c.id);
                           }
                         }}
-                        className="text-white/20 hover:text-red-400 p-1 rounded w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="text-muted-foreground/50 hover:text-red-400 p-1 rounded w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -567,22 +567,22 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   );
                 })
               ) : (
-                <div className="text-center py-6 text-white/20 text-xs font-medium">No active chats yet</div>
+                <div className="text-center py-6 text-muted-foreground/50 text-xs font-medium">No active chats yet</div>
               )}
             </div>
           </div>
 
           {/* Agent Knowledge Base (Learnings) */}
-          <div className="glass-dark border border-white/10 p-5 rounded-[2rem] flex flex-col min-h-[220px] max-h-[300px]">
+          <div className="bg-card border border-border p-5 rounded-lg flex flex-col min-h-[220px] max-h-[300px]">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-1.5">
                 <Brain className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/50 font-outfit">Learnings ({sources.length})</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground font-outfit">Learnings ({sources.length})</span>
               </div>
               <Button
                 variant="ghost"
                 onClick={() => setIsUploading(true)}
-                className="text-primary hover:text-white p-1 hover:bg-white/5 rounded-lg h-7 text-xs font-bold"
+                className="text-primary hover:text-foreground p-1 hover:bg-secondary rounded-lg h-7 text-xs font-bold"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" />
                 Teach Agent
@@ -593,7 +593,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 sources.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group"
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-secondary/10 hover:bg-secondary/80 transition-all group"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {s.type === 'pdf' ? (
@@ -601,7 +601,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       ) : (
                         <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
                       )}
-                      <span className="text-[11px] text-white/60 truncate font-medium" title={s.source}>{s.source}</span>
+                      <span className="text-[11px] text-muted-foreground truncate font-medium" title={s.source}>{s.source}</span>
                     </div>
                     <Button
                       variant="ghost"
@@ -610,28 +610,28 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           deleteSourceMutation.mutate(s.source);
                         }
                       }}
-                      className="text-white/25 hover:text-red-400 p-1 rounded hover:bg-red-400/10 w-6 h-6 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-muted-foreground/40 hover:text-red-400 p-1 rounded hover:bg-red-400/10 w-6 h-6 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-white/20 text-xs">No learnings yet</div>
+                <div className="text-center py-8 text-muted-foreground/50 text-xs">No learnings yet</div>
               )}
             </div>
           </div>
         </div>
 
         {/* Main Work / Chat Panel */}
-        <div className="flex-1 glass-dark border border-white/10 rounded-[2.5rem] flex flex-col overflow-hidden min-h-[450px] xl:min-h-0 relative">
+        <div className="flex-1 bg-card border border-border rounded-lg flex flex-col overflow-hidden min-h-[450px] xl:min-h-0 relative">
           {activeChatId ? (
             <>
               {/* Chat Header */}
-              <div className="px-6 py-4 border-b border-white/5 bg-black/10 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-sm font-bold text-foreground">
                     {chats.find((c) => c.id === activeChatId)?.title || "Active Chat"}
                   </span>
                 </div>
@@ -647,10 +647,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
                     >
                       <div
-                        className={`max-w-[80%] p-4 rounded-[1.5rem] text-sm leading-relaxed border ${
+                        className={`max-w-[80%] p-4 rounded-lg text-sm leading-relaxed border ${
                           isAssistant
-                            ? "bg-white/5 border-white/10 text-white rounded-tl-sm prose prose-invert prose-sm"
-                            : "bg-primary text-black border-primary/20 rounded-tr-sm font-medium"
+                            ? "bg-secondary border-border text-foreground rounded-tl-sm prose prose-sm"
+                            : "bg-primary text-primary-foreground border-primary/20 rounded-tr-sm font-medium"
                         }`}
                       >
                         {isAssistant ? (
@@ -663,7 +663,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   );
                 })}
                 {messages.length === 0 && !isSending && Object.keys(runningJobs).length === 0 && (
-                  <div className="h-full flex flex-col items-center justify-center text-center text-white/20 py-20">
+                  <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground/50 py-20">
                     <Sparkles className="w-10 h-10 mb-3 opacity-30 animate-pulse text-primary" />
                     <p className="text-sm">Thread is empty. Send a prompt to query project sources.</p>
                   </div>
@@ -673,13 +673,13 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
               {/* Active & Completed Document Generations */}
               {Object.keys(runningJobs).length > 0 && (
-                <div className="px-6 py-3 border-t border-white/5 bg-black/30 flex flex-col gap-2 max-h-[160px] overflow-y-auto custom-scrollbar">
+                <div className="px-6 py-3 border-t border-border bg-black/30 flex flex-col gap-2 max-h-[160px] overflow-y-auto custom-scrollbar">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 font-outfit">Document Generations</span>
                     <Button
                       variant="ghost"
                       onClick={() => setRunningJobs({})}
-                      className="text-white/30 hover:text-white p-0 h-auto text-[9px] font-bold"
+                      className="text-muted-foreground/60 hover:text-foreground p-0 h-auto text-[9px] font-bold"
                     >
                       Clear All
                     </Button>
@@ -690,7 +690,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       const isCompleted = job.status === "completed";
                       const isFailed = job.status === "failed";
                       return (
-                        <div key={job.id} className="glass-dark border border-white/5 p-2.5 rounded-xl flex items-center justify-between gap-3 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                        <div key={job.id} className="bg-card border-border rounded-lg shadow-none border border-border p-2.5 rounded-xl flex items-center justify-between gap-3 bg-secondary hover:bg-secondary/80 transition-all">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                               {job.tool_type === "create_presentation" && <Presentation className="w-3.5 h-3.5 text-primary" />}
@@ -698,12 +698,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                               {job.tool_type === "analyze_data" && <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-white text-[11px] font-bold truncate">
+                              <p className="text-foreground text-[11px] font-bold truncate">
                                 {job.tool_type === "create_presentation" && "Slides Deck"}
                                 {job.tool_type === "write_report" && "Report PDF"}
                                 {job.tool_type === "analyze_data" && "Spreadsheet XLSX"}
                               </p>
-                              <p className="text-white/40 text-[9px] mt-0.5 capitalize flex items-center gap-1">
+                              <p className="text-muted-foreground text-[9px] mt-0.5 capitalize flex items-center gap-1">
                                 {isPending ? (
                                   <>
                                     <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
@@ -737,11 +737,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
               {/* Tool Prompt Configuration Panel */}
               {promptForTool && (
-                <div className="px-6 py-4 border-t border-white/5 bg-black/40 space-y-3 animate-in slide-in-from-bottom duration-300">
+                <div className="px-6 py-4 border-t border-border bg-secondary/40 space-y-3 animate-in slide-in-from-bottom duration-300">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                      <span className="text-xs font-black uppercase tracking-widest text-white font-outfit">
+                      <span className="text-xs font-black uppercase tracking-widest text-foreground font-outfit">
                         {promptForTool.type === 'create_presentation' && "Configure Slides Deck"}
                         {promptForTool.type === 'write_report' && "Configure Report Document"}
                         {promptForTool.type === 'analyze_data' && "Configure Data Spreadsheet"}
@@ -753,12 +753,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                         setPromptForTool(null);
                         setCustomToolPrompt("");
                       }}
-                      className="text-white/30 hover:text-white p-1 rounded-lg w-6 h-6 flex items-center justify-center hover:bg-white/5"
+                      className="text-muted-foreground/60 hover:text-foreground p-1 rounded-lg w-6 h-6 flex items-center justify-center hover:bg-secondary"
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-white/40 text-[11px] leading-relaxed">
+                  <p className="text-muted-foreground text-[11px] leading-relaxed">
                     What specific topic, sections, or data details should this file focus on? The instructions will be shared in the chat and used by the builder.
                   </p>
                   <div className="flex gap-3">
@@ -773,7 +773,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       }
                       value={customToolPrompt}
                       onChange={(e) => setCustomToolPrompt(e.target.value)}
-                      className="flex-1 bg-white/5 border-white/10 text-white rounded-xl text-xs h-10 placeholder:text-white/20 focus:border-white/25"
+                      className="flex-1 bg-secondary border-border text-foreground rounded-xl text-xs h-10 placeholder:text-muted-foreground/50 focus:border-primary"
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && customToolPrompt.trim() && !isSending) {
                           e.preventDefault();
@@ -784,7 +784,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     <Button
                       onClick={handleGenerateWithPrompt}
                       disabled={!customToolPrompt.trim() || isSending}
-                      className="bg-primary text-black hover:bg-primary/95 font-bold rounded-xl h-10 px-5 text-xs shadow-lg shadow-primary/20"
+                      className="bg-primary text-primary-foreground hover:bg-primary/95 font-bold rounded-xl h-10 px-5 text-xs shadow-lg shadow-primary/20"
                     >
                       Generate
                     </Button>
@@ -793,12 +793,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               )}
 
               {/* Tools Quick Action Bar */}
-              <div className="flex gap-2 px-4 py-2.5 border-t border-white/5 bg-black/10 overflow-x-auto">
+              <div className="flex gap-2 px-4 py-2.5 border-t border-border bg-muted/30 overflow-x-auto">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => handleExecuteTool('create_presentation')}
-                  className="text-white/60 hover:text-white border border-white/10 hover:bg-white/5 rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
+                  className="text-muted-foreground hover:text-foreground border border-border hover:bg-secondary rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
                 >
                   <Presentation className="w-4 h-4 text-primary" />
                   Create Slides
@@ -807,7 +807,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   type="button"
                   variant="outline"
                   onClick={() => handleExecuteTool('write_report')}
-                  className="text-white/60 hover:text-white border border-white/10 hover:bg-white/5 rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
+                  className="text-muted-foreground hover:text-foreground border border-border hover:bg-secondary rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
                 >
                   <FileText className="w-4 h-4 text-primary" />
                   Write Report
@@ -816,7 +816,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   type="button"
                   variant="outline"
                   onClick={() => handleExecuteTool('analyze_data')}
-                  className="text-white/60 hover:text-white border border-white/10 hover:bg-white/5 rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
+                  className="text-muted-foreground hover:text-foreground border border-border hover:bg-secondary rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-primary" />
                   Analyze Data
@@ -824,19 +824,19 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               </div>
 
               {/* Chat Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-white/5 bg-black/20 flex gap-3">
+              <form onSubmit={handleSend} className="p-4 border-t border-border bg-secondary/20 flex gap-3">
                 <Input
                   required
                   placeholder="Ask a question about the project files..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   disabled={isSending}
-                  className="flex-1 bg-white/5 border-white/10 text-white rounded-xl focus:border-white/20 placeholder:text-white/20 h-12"
+                  className="flex-1 bg-secondary border-border text-foreground rounded-xl focus:border-border/80 placeholder:text-muted-foreground/50 h-12"
                 />
                 <Button
                   type="submit"
                   disabled={isSending || !inputMessage.trim()}
-                  className="bg-white text-black hover:bg-primary hover:text-black rounded-xl w-12 h-12 flex items-center justify-center shrink-0 font-bold"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl w-12 h-12 flex items-center justify-center shrink-0 font-bold"
                 >
                   {isSending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -850,11 +850,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
             /* Project Workspace Empty State / Suggestions Panel */
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-8 overflow-y-auto">
               <div className="max-w-md space-y-3">
-                <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-4 animate-float">
+                <div className="w-16 h-16 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-4 ">
                   <Sparkles className="w-8 h-8" />
                 </div>
-                <h3 className="text-white text-2xl font-black font-outfit">Project Workspace</h3>
-                <p className="text-white/40 text-sm leading-relaxed">
+                <h3 className="text-foreground text-2xl font-black font-outfit">Project Workspace</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Start a new chat thread to search uploaded files, or execute custom analytical tools below to generate presentation decks and documents.
                 </p>
               </div>
@@ -885,14 +885,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 <Button
                   onClick={() => setIsUploading(true)}
                   variant="outline"
-                  className="border-white/10 text-white hover:bg-white/5 font-bold h-12 px-6 rounded-2xl text-sm"
+                  className="border-border text-foreground hover:bg-secondary font-bold h-12 px-6 rounded-md text-sm"
                 >
                   <Brain className="w-4 h-4 mr-2 text-primary" />
                   Agent Learnings ({sources.length})
                 </Button>
                 <Button
                   onClick={handleCreateChat}
-                  className="bg-primary text-black hover:bg-primary/95 font-bold h-12 px-8 rounded-2xl text-sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/95 font-bold h-12 px-8 rounded-md text-sm"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Start Chatting
@@ -906,18 +906,18 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       {/* Ingest Source Modal / Knowledge Base */}
       {isUploading && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="glass-dark border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg space-y-6">
+          <div className="bg-card border border-border p-6 rounded-lg w-full max-w-lg space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold font-outfit text-white">Agent Knowledge Base</h3>
-                <p className="text-white/40 text-xs mt-1">
+                <h3 className="text-lg font-bold font-outfit text-foreground">Agent Knowledge Base</h3>
+                <p className="text-muted-foreground text-xs mt-1">
                   Manage documents and web links the agent learns from.
                 </p>
               </div>
               <Button
                 variant="ghost"
                 onClick={() => setIsUploading(false)}
-                className="text-white/40 hover:text-white p-1 rounded-lg w-8 h-8 flex items-center justify-center"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg w-8 h-8 flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -928,36 +928,38 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               {/* Left Column: Add New Source */}
               <div className="space-y-4">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 font-outfit">Add Learnings</span>
-                <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/5">
-                  <button
+                <div className="flex gap-2 p-1 bg-secondary rounded-xl border border-border">
+                  <Button
                     type="button"
+                    variant={uploadType === 'pdf' ? 'default' : 'ghost'}
                     onClick={() => setUploadType('pdf')}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                      uploadType === 'pdf' ? 'bg-primary text-black' : 'text-white/40 hover:text-white'
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all h-8 ${
+                      uploadType === 'pdf' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     PDF Document
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant={uploadType === 'url' ? 'default' : 'ghost'}
                     onClick={() => setUploadType('url')}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                      uploadType === 'url' ? 'bg-primary text-black' : 'text-white/40 hover:text-white'
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all h-8 ${
+                      uploadType === 'url' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Website URL
-                  </button>
+                  </Button>
                 </div>
 
                 <form onSubmit={handleIngestSubmit} className="space-y-3">
                   {uploadType === 'pdf' ? (
                     <div className="space-y-2">
-                      <div className="border border-dashed border-white/10 hover:border-white/20 transition-all rounded-xl p-4 flex flex-col items-center justify-center bg-white/[0.01] relative min-h-[110px]">
-                        <FileText className="w-8 h-8 text-white/20 mb-1" />
+                      <div className="border border-dashed border-border hover:border-border/80 transition-all rounded-xl p-4 flex flex-col items-center justify-center bg-transparent relative min-h-[110px]">
+                        <FileText className="w-8 h-8 text-muted-foreground/50 mb-1" />
                         {pdfFile ? (
-                          <span className="text-[10px] text-white truncate max-w-full font-medium">{pdfFile.name}</span>
+                          <span className="text-[10px] text-foreground truncate max-w-full font-medium">{pdfFile.name}</span>
                         ) : (
-                          <span className="text-[10px] text-white/30">Drag PDF here or browse</span>
+                          <span className="text-[10px] text-muted-foreground/60">Drag PDF here or browse</span>
                         )}
                         <input
                           type="file"
@@ -970,7 +972,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           type="button"
                           variant="outline"
                           onClick={() => document.getElementById("pdf-upload-input")?.click()}
-                          className="mt-2 border-white/10 text-white rounded-lg h-7 text-[10px]"
+                          className="mt-2 border-border text-foreground rounded-lg h-7 text-[10px]"
                         >
                           Browse Files
                         </Button>
@@ -984,7 +986,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                         placeholder="https://example.com/docs"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
-                        className="bg-white/5 border-white/10 text-white rounded-xl h-9 text-xs"
+                        className="bg-secondary border-border text-foreground rounded-xl h-9 text-xs"
                       />
                     </div>
                   )}
@@ -994,10 +996,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       type="checkbox"
                       checked={rightsConfirmed}
                       onChange={(e) => setRightsConfirmed(e.target.checked)}
-                      className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 mt-0.5"
+                      className="w-3.5 h-3.5 rounded border-border bg-secondary mt-0.5"
                       id="rights"
                     />
-                    <label htmlFor="rights" className="text-[9px] leading-tight text-white/40 select-none">
+                    <label htmlFor="rights" className="text-[9px] leading-tight text-muted-foreground select-none">
                       I confirm content rights.
                     </label>
                   </div>
@@ -1005,7 +1007,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <Button
                     type="submit"
                     disabled={uploadingState}
-                    className="w-full bg-primary text-black hover:bg-primary/90 font-bold rounded-xl h-9 text-xs"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl h-9 text-xs"
                   >
                     {uploadingState ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />
@@ -1023,7 +1025,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     sources.map((s, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group"
+                        className="flex items-center justify-between p-2 rounded-xl border border-border bg-secondary hover:bg-secondary/80 transition-all group"
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           {s.type === 'pdf' ? (
@@ -1031,19 +1033,19 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           ) : (
                             <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
                           )}
-                          <span className="text-[11px] text-white/70 truncate font-medium">{s.source}</span>
+                          <span className="text-[11px] text-foreground/80 truncate font-medium">{s.source}</span>
                         </div>
                         <Button
                           variant="ghost"
                           onClick={() => deleteSourceMutation.mutate(s.source)}
-                          className="text-white/20 hover:text-red-400 p-1 rounded hover:bg-red-400/10 w-6 h-6 shrink-0 flex items-center justify-center"
+                          className="text-muted-foreground/50 hover:text-red-400 p-1 rounded hover:bg-red-400/10 w-6 h-6 shrink-0 flex items-center justify-center"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     ))
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-white/20 text-[10px] py-10">
+                    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground/50 text-[10px] py-10">
                       <FileText className="w-6 h-6 mb-1 opacity-30" />
                       Agent has not learned from any files yet.
                     </div>
@@ -1072,15 +1074,15 @@ function SuggestionCard({
   return (
     <Card
       onClick={onClick}
-      className="glass-dark border-white/5 hover:border-white/10 cursor-pointer rounded-2xl hover:bg-white/[0.02] transition-all text-left group"
+      className="bg-card border border-border cursor-pointer rounded-lg hover:bg-secondary transition-all text-left group"
     >
       <CardContent className="p-5 space-y-3">
-        <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+        <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center group-hover:scale-110 transition-transform">
           {icon}
         </div>
         <div>
-          <h4 className="text-white font-bold text-xs font-outfit uppercase tracking-wider">{title}</h4>
-          <p className="text-white/30 text-xs mt-1.5 leading-normal">{description}</p>
+          <h4 className="text-foreground font-bold text-outfit uppercase tracking-wider">{title}</h4>
+          <p className="text-muted-foreground/60 text-xs mt-1.5 leading-normal">{description}</p>
         </div>
       </CardContent>
     </Card>

@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 
 export type Plan = {
-  code: "free" | "standard" | "pro";
+  code: "free" | "standard" | "team" | "pro";
   name: string;
   description: string;
   llm_class: "free" | "paid";

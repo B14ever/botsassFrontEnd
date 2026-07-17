@@ -230,7 +230,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
           <div>
             <Link
               href="/dashboard"
-              className="text-sm text-white/40 hover:text-white flex items-center gap-2 mb-4 transition-colors group"
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 mb-4 transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Dashboard
@@ -242,19 +242,19 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
             <h1 className="text-4xl md:text-5xl font-black font-outfit text-white tracking-tight">
               Bot <span className="gradient-text">Settings</span>
             </h1>
-            <p className="text-white/40 mt-3 text-lg max-w-2xl">
+            <p className="text-muted-foreground mt-3 text-lg max-w-2xl">
               Customize the widget styling, message tone, and data sources.
             </p>
           </div>
           <div className="hidden md:flex gap-3">
             <Link href={`/dashboard/integrate/${id}`}>
-              <Button variant="outline" className="rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 h-12 px-6 transition-all">
+              <Button variant="outline" className="rounded-md border-border bg-secondary hover:bg-secondary/80 h-12 px-6 transition-all">
                 <Code2 className="w-4 h-4 mr-2" />
                 Integrations
               </Button>
             </Link>
             <Link href={`/widget-chat?botId=${id}`} target="_blank" rel="noreferrer">
-              <Button className="rounded-2xl h-12 px-6 bg-white text-black hover:bg-white/90 font-bold">
+              <Button className="rounded-md h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                 <Monitor className="w-4 h-4 mr-2" />
                 Preview Widget
               </Button>
@@ -265,15 +265,15 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
+          <Card className="bg-card border-border rounded-lg shadow-none overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/20">
-                  <User className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                  <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-outfit text-white">Bot Profile</CardTitle>
-                  <CardDescription className="text-white/40">Basic identity and description</CardDescription>
+                  <CardDescription className="text-muted-foreground">Basic identity and description</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -284,7 +284,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g. Support Bot"
-                  className="bg-white/5 border-white/5 rounded-xl h-12 focus:ring-primary/20"
+                  className="bg-secondary border-border rounded-xl h-12 focus:ring-primary/20"
                 />
               </div>
 
@@ -296,14 +296,14 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                       value={formData.avatar_url}
                       onChange={(e) => setFormData({...formData, avatar_url: e.target.value})}
                       placeholder="https://example.com/bot-avatar.png"
-                      className="bg-white/5 border-white/5 rounded-xl h-12 focus:ring-primary/20"
+                      className="bg-secondary border-border rounded-xl h-12 focus:ring-primary/20"
                     />
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
                     {formData.avatar_url ? (
                       <img src={formData.avatar_url} className="w-full h-full object-cover" alt="preview" />
                     ) : (
-                      <ImageIcon className="w-5 h-5 text-white/20" />
+                      <ImageIcon className="w-5 h-5 text-muted-foreground/50" />
                     )}
                   </div>
                 </div>
@@ -315,22 +315,22 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   placeholder="What is this bot for?"
-                  className="w-full bg-white/5 border border-white/5 rounded-xl p-4 text-sm text-white placeholder:text-white/20 h-24 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full bg-secondary border border-border rounded-xl p-4 text-sm text-white placeholder:text-muted-foreground/50 h-24 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Knowledge Base Integration */}
-          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
+          <Card className="bg-card border-border rounded-lg shadow-none overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center border border-green-500/20">
-                  <Plus className="w-5 h-5 text-green-400" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                  <Plus className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-outfit text-white">Knowledge Base</CardTitle>
-                  <CardDescription className="text-white/40">Add sources for answers</CardDescription>
+                  <CardDescription className="text-muted-foreground">Add sources for answers</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -339,7 +339,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3 text-red-200"
+                  className="p-4 bg-red-500/10 border border-red-500/20 rounded-md flex gap-3 text-red-200"
                 >
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <div className="text-xs space-y-1">
@@ -349,12 +349,12 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                 </motion.div>
               )}
 
-              <label className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 cursor-pointer">
+              <label className="flex gap-3 rounded-md border border-border bg-secondary p-4 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rightsConfirmed}
                   onChange={(event) => setRightsConfirmed(event.target.checked)}
-                  className="mt-1 accent-primary"
+                  className="mt-1 border-border bg-secondary accent-primary"
                 />
                 <div className="text-xs text-white/50 leading-relaxed">
                   I confirm I have rights to use this website or PDF and understand crawlers should respect access rules.
@@ -362,12 +362,12 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
               </label>
 
               <Tabs defaultValue="url" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10 p-1 h-12 rounded-xl">
-                  <TabsTrigger value="url" className="data-[state=active]:bg-white/10 rounded-lg">
+                <TabsList className="grid w-full grid-cols-2 bg-secondary border border-border p-1 h-12 rounded-xl">
+                  <TabsTrigger value="url" className="data-[state=active]:bg-primary/10 rounded-lg">
                     <Globe className="w-4 h-4 mr-2" />
                     Website
                   </TabsTrigger>
-                  <TabsTrigger value="file" className="data-[state=active]:bg-white/10 rounded-lg">
+                  <TabsTrigger value="file" className="data-[state=active]:bg-primary/10 rounded-lg">
                     <Upload className="w-4 h-4 mr-2" />
                     PDF
                   </TabsTrigger>
@@ -380,14 +380,14 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                       placeholder="https://docs.example.com" 
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      className="bg-white/5 border-white/5 h-12 rounded-xl"
+                      className="bg-secondary border-border h-12 rounded-xl"
                     />
                   </div>
                   <Button
                     type="button"
                     onClick={handleIngestURL}
                     disabled={!url || ingesting || !rightsConfirmed}
-                    className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
+                    className="w-full h-12 rounded-md font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {ingesting ? "Importing website..." : "Import from URL"}
                   </Button>
@@ -395,8 +395,8 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
 
                 <TabsContent value="file" className="mt-6 space-y-4">
                   <div 
-                    className={`border-2 border-dashed rounded-[1.5rem] p-8 flex flex-col items-center justify-center transition-all ${
-                      pdfFile ? 'border-green-400/50 bg-green-400/5' : 'border-white/5 hover:border-white/10'
+                    className={`border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center transition-all ${
+                      pdfFile ? 'border-green-500/30 bg-green-500/10' : 'border-border hover:border-border/80'
                     }`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -408,13 +408,13 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   >
                     {pdfFile ? (
                       <>
-                        <FileText className="w-10 h-10 text-green-400 mb-2" />
+                        <FileText className="w-10 h-10 text-primary mb-2" />
                         <p className="text-sm font-medium">{pdfFile.name}</p>
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => setPdfFile(null)}
-                          className="mt-2 text-white/20 hover:text-white"
+                          className="mt-2 text-muted-foreground/50 hover:text-foreground"
                         >
                           Cancel
                         </Button>
@@ -422,7 +422,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     ) : (
                       <>
                         <Upload className="w-10 h-10 text-white/10 mb-2" />
-                        <p className="text-sm text-white/40 text-center">Drag PDF here or click to upload</p>
+                        <p className="text-sm text-muted-foreground text-center">Drag PDF here or click to upload</p>
                         <input 
                           type="file" 
                           accept=".pdf" 
@@ -433,7 +433,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                         <Button 
                           type="button"
                           variant="outline" 
-                          className="mt-4 border-white/10 bg-white/5 rounded-xl"
+                          className="mt-4 border-border bg-secondary rounded-xl"
                           onClick={() => document.getElementById('pdf-upload-settings')?.click()}
                         >
                           Select PDF
@@ -445,16 +445,16 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     type="button"
                     onClick={handleIngestPDF}
                     disabled={!pdfFile || ingesting || !rightsConfirmed}
-                    className="w-full bg-white text-black hover:bg-white/90 h-12 rounded-2xl font-bold"
+                    className="w-full h-12 rounded-md font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {ingesting ? "Uploading PDF..." : "Upload PDF"}
                   </Button>
                 </TabsContent>
               </Tabs>
               
-              <div className="mt-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-400 shrink-0" />
-                <p className="text-xs text-white/40 leading-relaxed">
+              <div className="mt-6 p-4 bg-accent/5 border border-border rounded-md flex gap-3">
+                <AlertCircle className="w-5 h-5 text-primary shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   We re-index these sources so answers stay up to date. This may take a few seconds.
                 </p>
               </div>
@@ -462,32 +462,32 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
           </Card>
 
           {/* Multi-Channel Deployments */}
-          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
+          <Card className="bg-card border-border rounded-lg shadow-none overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/20">
-                  <Monitor className="w-5 h-5 text-indigo-400" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                  <Monitor className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-outfit text-white">Multi-Channel Deployments</CardTitle>
-                  <CardDescription className="text-white/40">Deploy your chatbot on Telegram and WhatsApp</CardDescription>
+                  <CardDescription className="text-muted-foreground">Deploy your chatbot on Telegram and WhatsApp</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-8">
               {/* Telegram Section */}
-              <div className="space-y-4 border-b border-white/5 pb-6">
+              <div className="space-y-4 border-b border-border pb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
                     <h4 className="text-sm font-bold text-white uppercase tracking-wider font-outfit">Telegram Bot</h4>
                   </div>
                   {channels.some(c => c.type === 'telegram') ? (
-                    <span className="text-[10px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold uppercase px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold uppercase px-2 py-0.5 rounded-md">
                       Connected
                     </span>
                   ) : (
-                    <span className="text-[10px] bg-white/5 border border-white/10 text-white/40 font-bold uppercase px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] bg-secondary border border-border text-muted-foreground font-bold uppercase px-2 py-0.5 rounded-md">
                       Disconnected
                     </span>
                   )}
@@ -499,10 +499,10 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
                     const hookUrl = `${backendUrl}/webhooks/telegram/${tgChannel.id}`;
                     return (
-                      <div className="space-y-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                      <div className="space-y-3 p-4 bg-muted/10 border border-border rounded-md">
                         <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-white/40 uppercase">Webhook Endpoint URL</span>
-                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Webhook Endpoint URL</span>
+                          <div className="text-xs font-mono text-white/70 bg-secondary p-2.5 rounded-xl break-all">
                             {hookUrl}
                           </div>
                         </div>
@@ -510,7 +510,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                           type="button"
                           variant="ghost"
                           onClick={() => handleDisconnectChannel(tgChannel.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold rounded-xl text-xs h-9 px-4 mt-1"
+                          className="text-red-400 hover:text-red-300 hover:bg-destructive/10 font-bold rounded-xl text-xs h-9 px-4 mt-1"
                         >
                           Disconnect Telegram Bot
                         </Button>
@@ -526,9 +526,9 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                         placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
                         value={telegramToken}
                         onChange={(e) => setTelegramToken(e.target.value)}
-                        className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                        className="bg-secondary border-border h-11 rounded-xl text-xs"
                       />
-                      <p className="text-[10px] text-white/30">Get this token from @BotFather on Telegram.</p>
+                      <p className="text-[10px] text-muted-foreground/60">Get this token from @BotFather on Telegram.</p>
                     </div>
                     <Button
                       type="button"
@@ -550,11 +550,11 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     <h4 className="text-sm font-bold text-white uppercase tracking-wider font-outfit">WhatsApp Cloud API</h4>
                   </div>
                   {channels.some(c => c.type === 'whatsapp') ? (
-                    <span className="text-[10px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold uppercase px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold uppercase px-2 py-0.5 rounded-md">
                       Connected
                     </span>
                   ) : (
-                    <span className="text-[10px] bg-white/5 border border-white/10 text-white/40 font-bold uppercase px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] bg-secondary border border-border text-muted-foreground font-bold uppercase px-2 py-0.5 rounded-md">
                       Disconnected
                     </span>
                   )}
@@ -567,27 +567,27 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     const hookUrl = `${backendUrl}/webhooks/whatsapp/${waChannel.id}`;
                     const verifyToken = waChannel.config?.verify_token || "configured_verify_token";
                     return (
-                      <div className="space-y-3.5 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                      <div className="space-y-3.5 p-4 bg-muted/10 border border-border rounded-md">
                         <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-white/40 uppercase">Webhook Callback URL</span>
-                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Webhook Callback URL</span>
+                          <div className="text-xs font-mono text-white/70 bg-secondary p-2.5 rounded-xl break-all">
                             {hookUrl}
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-white/40 uppercase">Verify Token</span>
-                          <div className="text-xs font-mono text-white/70 bg-black/40 p-2.5 rounded-xl break-all">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">Verify Token</span>
+                          <div className="text-xs font-mono text-white/70 bg-secondary p-2.5 rounded-xl break-all">
                             {verifyToken}
                           </div>
                         </div>
-                        <p className="text-[10px] leading-relaxed text-white/30">
+                        <p className="text-[10px] leading-relaxed text-muted-foreground/60">
                           Configure these parameters under the Webhooks settings in your Meta App Developer Dashboard to establish connection.
                         </p>
                         <Button
                           type="button"
                           variant="ghost"
                           onClick={() => handleDisconnectChannel(waChannel.id)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold rounded-xl text-xs h-9 px-4"
+                          className="text-red-400 hover:text-red-300 hover:bg-destructive/10 font-bold rounded-xl text-xs h-9 px-4"
                         >
                           Disconnect WhatsApp
                         </Button>
@@ -603,7 +603,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                           placeholder="e.g. 109283920283722"
                           value={whatsappPhoneId}
                           onChange={(e) => setWhatsappPhoneId(e.target.value)}
-                          className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                          className="bg-secondary border-border h-11 rounded-xl text-xs"
                         />
                       </div>
                       <div className="space-y-2">
@@ -612,7 +612,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                           placeholder="Choose any random string (e.g. my-verify-token)"
                           value={whatsappVerifyToken}
                           onChange={(e) => setWhatsappVerifyToken(e.target.value)}
-                          className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                          className="bg-secondary border-border h-11 rounded-xl text-xs"
                         />
                       </div>
                     </div>
@@ -623,7 +623,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                         placeholder="EAABw..."
                         value={whatsappAccessToken}
                         onChange={(e) => setWhatsappAccessToken(e.target.value)}
-                        className="bg-white/5 border-white/5 h-11 rounded-xl text-xs"
+                        className="bg-secondary border-border h-11 rounded-xl text-xs"
                       />
                     </div>
                     <Button
@@ -640,15 +640,15 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
 
-          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden">
+          <Card className="bg-card border-border rounded-lg shadow-none overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center border border-purple-500/20">
-                  <Palette className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                  <Palette className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-outfit text-white">UI Customization</CardTitle>
-                  <CardDescription className="text-white/40">Visual theme and behavior</CardDescription>
+                  <CardDescription className="text-muted-foreground">Visual theme and behavior</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -661,12 +661,12 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                       type="color"
                       value={formData.primary_color}
                       onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
-                      className="w-12 h-12 p-1 bg-white/5 border-white/5 rounded-xl"
+                      className="w-12 h-12 p-1 bg-secondary border-border rounded-xl"
                     />
                     <Input 
                       value={formData.primary_color}
                       onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
-                      className="flex-1 bg-white/5 border-white/5 rounded-xl h-12 focus:ring-primary/20 uppercase"
+                      className="flex-1 bg-secondary border-border rounded-xl h-12 focus:ring-primary/20 uppercase"
                     />
                   </div>
                 </div>
@@ -675,11 +675,11 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   <label className="text-sm font-medium text-white/60">Quick Presets</label>
                   <div className="flex gap-2">
                     {['#7c3aed', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'].map((color) => (
-                      <button
+                      <Button
                         key={color}
                         type="button"
                         onClick={() => setFormData({...formData, primary_color: color})}
-                        className={`w-10 h-10 rounded-xl border-2 transition-all ${
+                        className={`w-10 h-10 rounded-xl border-2 transition-all p-0 min-w-0 ${
                           formData.primary_color === color ? 'border-white scale-110' : 'border-transparent'
                         }`}
                         style={{ backgroundColor: color }}
@@ -695,7 +695,7 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                   value={formData.welcome_message}
                   onChange={(e) => setFormData({...formData, welcome_message: e.target.value})}
                   placeholder="e.g. Hello! How can I assist you?"
-                  className="bg-white/5 border-white/5 rounded-xl h-12 focus:ring-primary/20"
+                  className="bg-secondary border-border rounded-xl h-12 focus:ring-primary/20"
                 />
               </div>
             </CardContent>
@@ -704,18 +704,18 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <div className="space-y-6">
-          <Card className="glass-dark border-white/5 rounded-[2rem] overflow-hidden sticky top-8">
+          <Card className="bg-card border-border rounded-lg shadow-none overflow-hidden sticky top-8">
             <CardHeader>
                 <CardTitle className="text-xl font-outfit text-white flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-yellow-400" />
                     Live Preview
                 </CardTitle>
-                <CardDescription className="text-white/40">How it looks on your site</CardDescription>
+                <CardDescription className="text-muted-foreground">How it looks on your site</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 {/* Mock Widget UI */}
-                <div className="bg-[#09090b] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                    <div className="p-3 border-b border-white/5 flex items-center gap-2" style={{ backgroundColor: `${formData.primary_color}1a` }}>
+                <div className="bg-background rounded-md border border-border overflow-hidden shadow-none">
+                    <div className="p-3 border-b border-border flex items-center gap-2" style={{ backgroundColor: `${formData.primary_color}1a` }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0" style={{ backgroundColor: formData.primary_color }}>
                             {formData.avatar_url ? (
                                 <img src={formData.avatar_url} className="w-full h-full object-cover" alt="bot" />
@@ -727,13 +727,13 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                             <h4 className="text-[11px] font-bold text-white truncate">{formData.name || "Support Bot"}</h4>
                             <div className="flex items-center gap-1">
                                 <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[8px] text-white/40 uppercase tracking-tighter">Online</span>
+                                <span className="text-[8px] text-muted-foreground uppercase tracking-tighter">Online</span>
                             </div>
                         </div>
                     </div>
                     <div className="p-4 space-y-3 h-48">
-                        <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-                            <p className="text-[10px] text-white/80 leading-relaxed">
+                        <div className="bg-secondary border border-border rounded-md rounded-tl-none p-3 max-w-[80%]">
+                            <p className="text-[10px] text-foreground leading-relaxed">
                                 {formData.welcome_message}
                             </p>
                         </div>
@@ -744,12 +744,12 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
                     <Button 
                         type="submit"
                         disabled={updateBotMutation.isPending}
-                        className="w-full bg-white text-black hover:bg-white/90 font-bold h-12 rounded-2xl transition-all"
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-12 rounded-md transition-all"
                     >
                         {updateBotMutation.isPending ? "Saving Changes..." : "Save Changes"}
                         {!updateBotMutation.isPending && <Save className="w-4 h-4 ml-2" />}
                     </Button>
-                    <p className="text-[10px] text-center text-white/20">
+                    <p className="text-[10px] text-center text-muted-foreground/50">
                         Changes apply instantly to all live widgets.
                     </p>
                 </div>

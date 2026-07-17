@@ -132,18 +132,18 @@ export default function ChatPage() {
   return (
     <Sidebar>
       <div className="flex flex-col h-full text-white">
-        <div className="flex items-center justify-between px-2 py-2 border-b border-white/5">
+        <div className="flex items-center justify-between px-2 py-2 border-b border-border">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-white/10 rounded-full">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-secondary/80 rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+              <div className="w-10 h-10 rounded-md bg-secondary/80 flex items-center justify-center border border-border">
                 <Bot className="w-6 h-6 text-white/60" />
               </div>
               <div>
                 <h2 className="text-base font-bold font-outfit text-white leading-tight">{bot?.name || "Support Bot"}</h2>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-white/20">
+                <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
                   {knowledge?.ready ? "Knowledge ready" : "Waiting for knowledge"}
                 </div>
               </div>
@@ -151,34 +151,34 @@ export default function ChatPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-white/20 hover:text-white hover:bg-white/10 rounded-xl">
+            <Button variant="ghost" size="icon" className="text-muted-foreground/50 hover:text-foreground hover:bg-secondary/80 rounded-xl">
               <Shield className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-white/20 hover:text-white hover:bg-white/10 rounded-xl">
+            <Button variant="ghost" size="icon" className="text-muted-foreground/50 hover:text-foreground hover:bg-secondary/80 rounded-xl">
               <Settings className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
         {!knowledge?.ready ? (
-          <div className="rounded-3xl border border-amber-400/20 bg-amber-400/5 p-5 my-6">
+          <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-5 my-6">
             <div className="font-semibold text-white">No indexed knowledge yet</div>
             <div className="text-sm text-white/50 mt-1">
               Connect a website or PDF first, then come back here for grounded answers.
             </div>
-            <Button onClick={() => router.push("/dashboard/create")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-2xl">
+            <Button onClick={() => router.push("/dashboard/create")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-md">
               Add a source
             </Button>
           </div>
         ) : null}
 
         {limitError ? (
-          <div className="rounded-3xl border border-amber-400/20 bg-amber-400/5 p-5 mb-4">
+          <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-5 mb-4">
             <div className="font-semibold text-white">Chat limit reached</div>
             <div className="text-sm text-white/50 mt-1">
               {limitError.limit.replaceAll("_", " ")} resets on {new Date(limitError.period_end).toLocaleDateString()}.
             </div>
-            <Button onClick={() => router.push("/dashboard/billing")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-2xl">
+            <Button onClick={() => router.push("/dashboard/billing")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-md">
               Upgrade plan
             </Button>
           </div>
@@ -198,7 +198,7 @@ export default function ChatPage() {
           ) : (
             messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl p-4 border ${message.role === "user" ? "bg-white text-black border-white rounded-tr-none" : "bg-white/[0.03] border-white/10 text-white/80 rounded-tl-none"}`}>
+                <div className={`max-w-[80%] rounded-md p-4 border ${message.role === "user" ? "bg-white text-black border-white rounded-tr-none" : "bg-secondary/80 border-border text-foreground rounded-tl-none"}`}>
                   <div className="prose prose-invert prose-sm max-w-none text-inherit leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
@@ -213,24 +213,24 @@ export default function ChatPage() {
 
         <div className="pt-6">
           <form onSubmit={handleSend} className="relative group">
-            <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-2 backdrop-blur-2xl">
+            <div className="relative flex items-center bg-secondary border border-border rounded-md p-2 backdrop-blur-2xl">
               <Input
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder={bot?.preferred_language === "am" ? "ጥያቄዎን ይጻፉ..." : "Ask a question..."}
                 disabled={isTyping}
-                className="bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-white/20 h-12"
+                className="bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-muted-foreground/50 h-12"
               />
               <div className="flex items-center gap-1 pr-2">
-                <Button type="submit" disabled={!input.trim() || isTyping} className={input.trim() ? "bg-white text-black hover:bg-white/90 rounded-xl" : "bg-white/5 text-white/20 rounded-xl"}>
+                <Button type="submit" disabled={!input.trim() || isTyping} className={input.trim() ? "bg-white text-black hover:bg-white/90 rounded-xl" : "bg-secondary text-muted-foreground/50 rounded-xl"}>
                   {isTyping ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-white/20">
+            <div className="mt-3 flex items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
               <span className="flex items-center gap-1.5"><Shield className="w-3 h-3" /> Grounded responses</span>
               <span
-                className="flex items-center gap-1.5 cursor-pointer hover:text-white/40 transition-colors"
+                className="flex items-center gap-1.5 cursor-pointer hover:text-muted-foreground transition-colors"
                 onClick={() => setMessages([])}
               >
                 <Trash2 className="w-3 h-3" /> Clear chat
