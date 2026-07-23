@@ -2,8 +2,7 @@
 
 import { useWorkspaceStore } from "@/store/workspaceStore";
 import { fetchUsage, fetchUsageAnalytics } from "@/lib/api/usage";
-import {
-  BarChart3, use, useState, useEffect, useRef } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +35,9 @@ import {
   MessageSquareCode,
   Smartphone,
   Eye,
-  Trash2
+  Trash2,
+  BarChart3,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/components/shared/Sidebar";
