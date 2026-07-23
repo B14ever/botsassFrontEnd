@@ -143,7 +143,7 @@ export default function WorkspacesListPage() {
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1.5 min-h-[2.5rem] line-clamp-2 leading-relaxed">
-                          Workspace environment for agents, projects, and custom knowledge.
+                          Train AI bots with custom knowledge sources and interact with them in this workspace.
                         </p>
                       </div>
                     </div>

@@ -133,9 +133,9 @@ export default function AgentsPage() {
 function BotCard({ bot, isViewer }: { bot: BotRecord; isViewer: boolean }) {
   return (
     <div className="border border-border/80 bg-card rounded-lg p-4 shadow-xs flex flex-col justify-between hover:border-border transition-all space-y-4">
-      <div className="space-y-2">
+      <Link href={`/dashboard/agents/${bot.id}`} className="space-y-2 flex-1 cursor-pointer group">
         <div className="flex items-center justify-between">
-          <div className="w-8 h-8 rounded-md bg-secondary border border-border/50 flex items-center justify-center text-primary">
+          <div className="w-8 h-8 rounded-md bg-secondary border border-border/50 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
             <Bot className="w-4 h-4" />
           </div>
           <span className="text-[10px] font-medium text-muted-foreground">
@@ -143,27 +143,27 @@ function BotCard({ bot, isViewer }: { bot: BotRecord; isViewer: boolean }) {
           </span>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-foreground leading-tight">{bot.name}</h3>
+          <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">{bot.name}</h3>
           <p className="text-xs text-muted-foreground mt-1 min-h-[2.5rem] line-clamp-2 leading-relaxed">
             {bot.description || "Custom AI support agent trained on workspace knowledge."}
           </p>
         </div>
-      </div>
+      </Link>
 
       <div className="flex items-center gap-1.5 pt-2 border-t border-border/40">
-        <Link href={`/dashboard/chat/${bot.id}`} className="flex-1">
+        <Link href={`/dashboard/agents/${bot.id}?tab=preview-widget`} className="flex-1">
           <Button size="sm" variant="secondary" className="w-full h-8 text-xs font-medium gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
             Test Chat
           </Button>
         </Link>
-        <Link href={`/dashboard/integrate/${bot.id}`}>
+        <Link href={`/dashboard/agents/${bot.id}?tab=integration-widget`}>
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
             <Globe className="w-3.5 h-3.5" />
           </Button>
         </Link>
         {!isViewer && (
-          <Link href={`/dashboard/settings/${bot.id}`}>
+          <Link href={`/dashboard/agents/${bot.id}?tab=preview-theme`}>
             <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
               <Settings className="w-3.5 h-3.5" />
             </Button>
