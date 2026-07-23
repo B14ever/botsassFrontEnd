@@ -456,6 +456,17 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                 <FileText className="w-4 h-4" />
                 Knowledge Info
               </button>
+              <button
+                onClick={() => handleTabChange("usage-metrics")}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
+                  activeTab === "usage-metrics"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Usage Metrics
+              </button>
             </div>
 
             {/* Integrations Group */}
