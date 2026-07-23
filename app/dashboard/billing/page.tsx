@@ -3,11 +3,16 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Check, MessageSquare, Bot, FolderOpen,
-  BarChart3, Radio, CreditCard, Sparkles
+  BarChart3, Radio, Sparkles, ShieldAlert
 } from "lucide-react";
 import Sidebar from "@/components/shared/Sidebar";
+import RoleGuard from "@/components/shared/RoleGuard";
+import PageHeader from "@/components/shared/PageHeader";
 import { fetchSubscription } from "@/lib/api/subscription";
 import { fetchUsage } from "@/lib/api/usage";
+import { useAuthStore } from "@/store/authStore";
+import { useWorkspaceStore } from "@/store/workspaceStore";
+import { listMembers, type WorkspaceMember } from "@/lib/api/workspace";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -34,86 +39,91 @@ type UsageLimits = {
 };
 
 export default function BillingPage() {
-  const { data: subscription } = useQuery({ queryKey: ["subscription"], queryFn: fetchSubscription });
-  const { data: usage }        = useQuery({ queryKey: ["usage"],        queryFn: fetchUsage });
+  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const currentUser = useAuthStore((s) => s.user);
+
+  const { data: subscription } = useQuery({ queryKey: ["subscription", activeWorkspaceId], queryFn: fetchSubscription, enabled: !!activeWorkspaceId });
+  const { data: usage }        = useQuery({ queryKey: ["usage", activeWorkspaceId],        queryFn: fetchUsage, enabled: !!activeWorkspaceId });
+
+  const { data: members = [] } = useQuery<WorkspaceMember[]>({ queryKey: ["workspace-members", activeWorkspaceId], queryFn: () => listMembers(activeWorkspaceId!), enabled: !!activeWorkspaceId });
+
+  const currentMember = members.find((m) => m.user_id === currentUser?.id);
+  const isNotOwnerOrAdmin = currentMember && currentMember.role_id !== "owner" && currentMember.role_id !== "admin";
 
   return (
-    <Sidebar>
-      <div className="space-y-6 pb-10 animate-in fade-in duration-300">
-        {/* Header section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-0.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-              <CreditCard className="w-3 h-3" />
-              Billing
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground font-sans">
-              Billing &amp; Limits
-            </h1>
-            <p className="text-xs text-muted-foreground font-medium">
-              Manage your active plan, usage limits, and billing cycle.
-            </p>
-          </div>
-          <Link href="/dashboard/plans">
-            <Button size="sm" className="rounded-md font-semibold px-4 h-9">
-              <Sparkles className="w-4 h-4 mr-1.5" />
-              Upgrade Plan
-            </Button>
-          </Link>
-        </div>
+    <RoleGuard requiredPermission="manage_billing" requiredPermissionLabel="Manage Billing">
+      <Sidebar>
+      <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <PageHeader
+          title="Billing & Usage Limits"
+          description="Manage workspace subscription plan, active quotas, and seat meters."
+          actions={
+            !isNotOwnerOrAdmin && (
+              <Link href="/dashboard/plans">
+                <Button size="sm" className="gap-2 h-9">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Upgrade Plan
+                </Button>
+              </Link>
+            )
+          }
+        />
 
-        {/* Current plan banner + usage bars */}
+        {/* Non-Owner Notice (RBAC) */}
+        {isNotOwnerOrAdmin && (
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3.5 flex items-center gap-3 text-xs text-amber-500 font-medium">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <div>
+              <p className="font-semibold text-foreground">Billing Management Restricted</p>
+              <p className="text-muted-foreground mt-0.5">
+                You belong to this workspace as a <span className="capitalize font-medium text-foreground">{currentMember.role_name || currentMember.role_id}</span>. Only Workspace Owners and Admins can modify subscription plans or billing details.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Current Plan & Usage Meter Grid */}
         {subscription && (
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            {/* Banner row */}
-            <div className="flex items-center gap-4 px-5 py-4 border-b border-border bg-secondary/40">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <Check className="w-4 h-4 text-primary" />
+          <div className="border border-border/80 bg-card rounded-lg overflow-hidden shadow-xs space-y-4">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-secondary/30">
+              <div className="w-8 h-8 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                <Check className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  You are on the{" "}
-                  <span className="font-black uppercase">{subscription.plan_code}</span>{" "}
-                  plan
-                </p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground capitalize">{subscription.plan_code} Plan</h3>
+                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    {subscription.status}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Active through{" "}
-                  {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
-                    month: "long", day: "numeric", year: "numeric",
-                  })}{" "}
-                  · Status: {subscription.status}
+                  Plan billing is handled at the workspace owner level.
                 </p>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest bg-primary text-primary-foreground px-3 py-1 rounded-full shrink-0">
-                {subscription.plan_code}
-              </span>
             </div>
 
-            {/* Usage bars */}
+            {/* Quota Metrics */}
             {usage && (
-              <div className="px-5 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {USAGE_METRICS.map((m) => {
-                  const used  = m.used(usage.used as UsageUsed);
-                  const limit = m.limit(usage.limits as UsageLimits);
-                  const pct   = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-                  const warn  = pct >= 80;
-                  const crit  = pct >= 95;
+              <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {USAGE_METRICS.map((metric) => {
+                  const used = metric.used(usage.used);
+                  const limit = metric.limit(usage.limits);
+                  const percentage = Math.min(100, Math.round((used / limit) * 100)) || 0;
+
                   return (
-                    <div key={m.key} className="space-y-1.5 border border-border/40 p-4 rounded-xl bg-muted/10">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                          {m.icon}{m.label}
+                    <div key={metric.key} className="p-3 rounded-lg border border-border/50 bg-secondary/10 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground flex items-center gap-1.5">
+                          {metric.icon} {metric.label}
                         </span>
-                        <span className={`text-xs font-bold tabular-nums ${crit ? "text-red-500" : warn ? "text-amber-500" : "text-foreground"}`}>
-                          {used.toLocaleString()} / {limit.toLocaleString()}
+                        <span className="text-muted-foreground font-mono text-[11px]">
+                          {used} / {limit}
                         </span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            crit ? "bg-red-500" : warn ? "bg-amber-400" : "bg-primary"
-                          }`}
-                          style={{ width: `${pct}%` }}
+                          className={`h-full transition-all ${percentage > 90 ? "bg-destructive" : "bg-primary"}`}
+                          style={{ width: `${percentage}%` }}
                         />
                       </div>
                     </div>
@@ -123,7 +133,8 @@ export default function BillingPage() {
             )}
           </div>
         )}
-      </div>
-    </Sidebar>
+        </div>
+      </Sidebar>
+    </RoleGuard>
   );
 }

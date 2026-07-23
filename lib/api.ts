@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getSession } from 'next-auth/react';
 import { useAuthStore } from '@/store/authStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 
 type SessionWithAccessToken = {
   accessToken?: string;
@@ -23,6 +24,12 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const activeWorkspaceId = useWorkspaceStore.getState().activeWorkspaceId;
+  if (activeWorkspaceId) {
+    config.headers['X-Workspace-ID'] = activeWorkspaceId;
+  }
+
   return config;
 });
 

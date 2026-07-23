@@ -4,7 +4,7 @@ export type Subscription = {
   id: string;
   subject_type: string;
   subject_id: string;
-  plan_code: "free" | "standard" | "team" | "pro";
+  plan_code: "free" | "standard" | "pro";
   status: string;
   current_period_start: string;
   current_period_end: string;

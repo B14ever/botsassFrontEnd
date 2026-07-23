@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getSession } from "next-auth/react";
-import { ArrowLeft, Bot, MessageSquare, RefreshCcw, Send, Settings, Shield, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, RotateCcw, Bot } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/api";
 import { getAxiosErrorMessage, type LimitReachedError, isLimitReachedError } from "@/lib/api/errors";
 import { toast } from "sonner";
@@ -37,9 +40,9 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [limitError, setLimitError] = useState<LimitReachedError | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: bot } = useQuery({
+  const { data: bot, isLoading: botLoading } = useQuery({
     queryKey: ["bot", params.id],
     queryFn: async () => {
       const response = await api.get<BotRecord>(`/bots/${params.id}`);
@@ -56,16 +59,12 @@ export default function ChatPage() {
   });
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   const handleSend = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!input.trim() || isTyping) {
-      return;
-    }
+    if (!input.trim() || isTyping) return;
 
     const userMessage = input.trim();
     setInput("");
@@ -76,41 +75,41 @@ export default function ChatPage() {
     try {
       const session = await getSession();
       const token = (session as { accessToken?: string } | null)?.accessToken ?? "";
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1"}/chat/ask`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ bot_id: params.id, message: userMessage }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1"}/chat/ask`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ bot_id: params.id, message: userMessage }),
+        }
+      );
 
       if (!response.ok) {
         const errorPayload = (await response.json()) as Record<string, unknown>;
         if (isLimitReachedError(errorPayload)) {
           setLimitError(errorPayload);
-          throw new Error(`Current plan limit reached for ${errorPayload.limit.replaceAll("_", " ")}.`);
+          throw new Error(
+            `Current plan limit reached for ${errorPayload.limit.replaceAll("_", " ")}.`
+          );
         }
         throw new Error((errorPayload.error as string) || "Failed to connect");
       }
 
       const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No response body");
-      }
+      if (!reader) throw new Error("No response body");
 
       let assistantMessage = "";
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
+        if (done) break;
 
         const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split("\n");
-        for (const line of lines) {
+        for (const line of chunk.split("\n")) {
           if (line.startsWith("data: ")) {
             assistantMessage += line.slice(6);
             setMessages((prev) => {
@@ -122,122 +121,140 @@ export default function ChatPage() {
         }
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : getAxiosErrorMessage(error, "Failed to connect.");
+      const message =
+        error instanceof Error ? error.message : getAxiosErrorMessage(error, "Failed to connect.");
       toast.error(message);
     } finally {
       setIsTyping(false);
     }
   };
 
+  const placeholder =
+    bot?.preferred_language === "am" ? "ጥያቄዎን ይጻፉ..." : "Ask a question...";
+
   return (
     <Sidebar>
-      <div className="flex flex-col h-full text-white">
-        <div className="flex items-center justify-between px-2 py-2 border-b border-border">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()} className="hover:bg-secondary/80 rounded-full">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-md bg-secondary/80 flex items-center justify-center border border-border">
-                <Bot className="w-6 h-6 text-white/60" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold font-outfit text-white leading-tight">{bot?.name || "Support Bot"}</h2>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">
-                  {knowledge?.ready ? "Knowledge ready" : "Waiting for knowledge"}
-                </div>
-              </div>
-            </div>
+      <div className="flex flex-col h-full">
+        {/* ── Header ── */}
+        <div className="flex items-center gap-3 pb-4 border-b border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+
+          <div className="min-w-0 flex-1">
+            {botLoading ? (
+              <Skeleton className="h-4 w-32" />
+            ) : (
+              <p className="text-sm font-semibold text-foreground truncate">
+                {bot?.name || "Agent"}
+              </p>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-muted-foreground/50 hover:text-foreground hover:bg-secondary/80 rounded-xl">
-              <Shield className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-muted-foreground/50 hover:text-foreground hover:bg-secondary/80 rounded-xl">
-              <Settings className="w-4 h-4" />
-            </Button>
-          </div>
+
         </div>
 
-        {!knowledge?.ready ? (
-          <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-5 my-6">
-            <div className="font-semibold text-white">No indexed knowledge yet</div>
-            <div className="text-sm text-white/50 mt-1">
-              Connect a website or PDF first, then come back here for grounded answers.
-            </div>
-            <Button onClick={() => router.push("/dashboard/create")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-md">
-              Add a source
-            </Button>
-          </div>
-        ) : null}
 
-        {limitError ? (
-          <div className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-5 mb-4">
-            <div className="font-semibold text-white">Chat limit reached</div>
-            <div className="text-sm text-white/50 mt-1">
-              {limitError.limit.replaceAll("_", " ")} resets on {new Date(limitError.period_end).toLocaleDateString()}.
-            </div>
-            <Button onClick={() => router.push("/dashboard/billing")} className="mt-4 bg-white text-black hover:bg-white/90 rounded-md">
-              Upgrade plan
-            </Button>
-          </div>
-        ) : null}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 space-y-6 scroll-smooth">
+        {/* ── Limit error banner ── */}
+        {limitError && (
+          <Card size="sm" className="mt-4">
+            <CardHeader>
+              <p className="text-sm font-semibold text-foreground">Chat limit reached</p>
+              <p className="text-xs text-muted-foreground">
+                {limitError.limit.replaceAll("_", " ")} resets on{" "}
+                {new Date(limitError.period_end).toLocaleDateString()}.
+              </p>
+            </CardHeader>
+            <CardFooter>
+              <Button size="sm" onClick={() => router.push("/dashboard/billing")}>
+                Upgrade plan
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+
+        {/* ── Messages ── */}
+        <ScrollArea className="flex-1 mt-4 -mx-1 px-1">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center opacity-50 text-center space-y-4">
-              <MessageSquare className="w-12 h-12" />
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold font-outfit uppercase tracking-wider text-white">Ready to chat</h3>
-                <p className="text-sm max-w-md text-white/50">
-                  Ask something grounded in your sources. If the bot cannot find the answer, it should say so and guide you toward better context.
-                </p>
-              </div>
+            <div className="flex flex-col items-center justify-center h-48 text-center gap-2">
+              <Bot className="w-8 h-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Send a message to start testing this agent.
+              </p>
             </div>
           ) : (
-            messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-md p-4 border ${message.role === "user" ? "bg-white text-black border-white rounded-tr-none" : "bg-secondary/80 border-border text-foreground rounded-tl-none"}`}>
-                  <div className="prose prose-invert prose-sm max-w-none text-inherit leading-relaxed">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
-                  </div>
-                  {index === messages.length - 1 && isTyping && message.role === "assistant" ? (
-                    <span className="inline-block w-1.5 h-4 bg-white/40 ml-1 animate-pulse align-middle" />
-                  ) : null}
+            <div className="space-y-4 pb-2">
+              {messages.map((message, index) => (
+                <div
+                  key={`${message.role}-${index}`}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <Card
+                    size="sm"
+                    className={`max-w-[80%] rounded-xl ring-0 border ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card text-card-foreground border-border"
+                    }`}
+                  >
+                    <CardContent className="py-2 px-3">
+                      <div className="prose prose-sm max-w-none text-inherit leading-relaxed dark:prose-invert">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                      {index === messages.length - 1 &&
+                        isTyping &&
+                        message.role === "assistant" && (
+                          <span className="inline-block w-1 h-3.5 bg-current opacity-60 ml-0.5 animate-pulse align-middle" />
+                        )}
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))}
 
-        <div className="pt-6">
-          <form onSubmit={handleSend} className="relative group">
-            <div className="relative flex items-center bg-secondary border border-border rounded-md p-2 backdrop-blur-2xl">
-              <Input
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder={bot?.preferred_language === "am" ? "ጥያቄዎን ይጻፉ..." : "Ask a question..."}
-                disabled={isTyping}
-                className="bg-transparent border-none focus-visible:ring-0 text-white placeholder:text-muted-foreground/50 h-12"
-              />
-              <div className="flex items-center gap-1 pr-2">
-                <Button type="submit" disabled={!input.trim() || isTyping} className={input.trim() ? "bg-white text-black hover:bg-white/90 rounded-xl" : "bg-secondary text-muted-foreground/50 rounded-xl"}>
-                  {isTyping ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
+              {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
+                <div className="flex justify-start">
+                  <Card size="sm" className="rounded-xl ring-0 border border-border">
+                    <CardContent className="py-2 px-3 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              <div ref={bottomRef} />
             </div>
-            <div className="mt-3 flex items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-              <span className="flex items-center gap-1.5"><Shield className="w-3 h-3" /> Grounded responses</span>
-              <span
-                className="flex items-center gap-1.5 cursor-pointer hover:text-muted-foreground transition-colors"
-                onClick={() => setMessages([])}
-              >
-                <Trash2 className="w-3 h-3" /> Clear chat
-              </span>
-            </div>
-          </form>
-        </div>
+          )}
+        </ScrollArea>
+
+        {/* ── Input ── */}
+        <form onSubmit={handleSend} className="mt-4 flex items-center gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={placeholder}
+            disabled={isTyping}
+            className="flex-1"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!input.trim() || isTyping}
+          >
+            {isTyping ? (
+              <RotateCcw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
+        </form>
       </div>
     </Sidebar>
   );

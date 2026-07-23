@@ -15,8 +15,10 @@ const outfit = Outfit({
   display: "swap",
 });
 
+import { PLATFORM_NAME } from "@/constants";
+
 export const metadata: Metadata = {
-  title: "Redas | Support Bots for Your Docs",
+  title: `${PLATFORM_NAME} | Support Bots for Your Docs`,
   description: "Turn docs and FAQs into fast, trusted support answers.",
 };
 
@@ -27,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} scroll-smooth`} suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

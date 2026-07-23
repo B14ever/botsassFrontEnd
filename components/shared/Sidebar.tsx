@@ -4,18 +4,17 @@ import { signOut, useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store/authStore';
 import {
   LayoutDashboard,
-  PlusCircle,
   Settings,
   LogOut,
   User,
   Menu,
   X,
   CreditCard,
-  Folder,
-  Users,
-  ChevronDown,
   Bot,
   Sparkles,
+  Building2,
+  Lock,
+  Activity,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,15 +24,44 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { fetchSubscription } from '@/lib/api/subscription';
 import { fetchUsage } from '@/lib/api/usage';
+import WorkspaceSwitcher from './WorkspaceSwitcher';
 import ThemeToggle from './ThemeToggle';
+import { cleanWorkspaceName } from '@/lib/utils';
+
+import { useWorkspaceStore } from '@/store/workspaceStore';
+import { getWorkspaceUsage, listWorkspaces, WorkspaceUsage } from '@/lib/api/workspace';
+
+import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
+import { PLATFORM_NAME } from '@/constants';
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const { data: session } = useSession();
+  const { activeWorkspaceId, workspaces, setWorkspaces } = useWorkspaceStore();
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const currentUserId = (session?.user as { id?: string })?.id || user?.id;
+
+  const { isOwner, canManageWorkspace } = useWorkspacePermissions();
+
+  // Auto-initialize user's workspaces
+  const { data: fetchedWorkspaces } = useQuery({
+    queryKey: ['workspaces'],
+    queryFn: listWorkspaces,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (fetchedWorkspaces && fetchedWorkspaces.length > 0) {
+      setWorkspaces(fetchedWorkspaces);
+    }
+  }, [fetchedWorkspaces, setWorkspaces]);
+
+  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+  const isPersonalAccount = !activeWorkspace || !currentUserId || activeWorkspace.owner_id === currentUserId;
 
   // Fetch subscription and usage
   const { data: subscription } = useQuery({
@@ -43,26 +71,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   });
 
   const { data: usage } = useQuery({
-    queryKey: ['usage'],
+    queryKey: ['usage', activeWorkspaceId],
     queryFn: fetchUsage,
     retry: false,
   });
 
-  // Determine if Settings sub-menu is active (i.e. we are on billing, team, plans, or general settings pages)
-  const isSettingsActive =
-    (pathname.startsWith('/dashboard/settings') && !pathname.match(/\/dashboard\/settings\/.+/)) ||
-    pathname.startsWith('/dashboard/team') ||
-    pathname.startsWith('/dashboard/billing') ||
-    pathname.startsWith('/dashboard/plans');
-
-  const [isSettingsOpen, setIsSettingsOpen] = useState(isSettingsActive);
-
-  // Keep dropdown open if user navigates to it
-  useEffect(() => {
-    if (isSettingsActive) {
-      setIsSettingsOpen(true);
-    }
-  }, [pathname, isSettingsActive]);
+  const { data: wsUsage } = useQuery<WorkspaceUsage>({
+    queryKey: ['workspace-usage', activeWorkspaceId],
+    queryFn: () => getWorkspaceUsage(activeWorkspaceId!),
+    enabled: !!activeWorkspaceId,
+    retry: false,
+  });
 
   const handleLogout = async () => {
     logout();
@@ -70,10 +89,8 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  const planCode = subscription?.plan_code || 'free';
-  const isTeam = planCode === 'team';
+  const planCode = wsUsage?.plan_code || subscription?.plan_code || 'free';
 
-  // Format subscription badge styling
   const badgeStyles: Record<string, string> = {
     free: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
     standard: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/50',
@@ -82,24 +99,38 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   };
   const planStyle = badgeStyles[planCode] || badgeStyles.free;
 
-  // Navigation Items
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
-    { name: 'Agents', href: '/dashboard/agents', icon: Bot, exact: false },
-    { name: 'Projects', href: '/dashboard/projects', icon: Folder, exact: false },
-    {
-      name: 'Settings',
-      icon: Settings,
-      submenu: [
-        { name: 'General', href: '/dashboard/settings' },
-        { name: 'Members', href: '/dashboard/team' },
-        { name: 'Plans', href: '/dashboard/plans' },
-        { name: 'Billing', href: '/dashboard/billing' },
-      ],
-    },
-  ];
+  // Navigation Items Strategy:
+  // If Personal Account -> Full personal navigation (Dashboard, Workspaces, Agents, Settings, Plans, Billing)
+  // If Invited Workspace Account -> ONLY show that Workspace & Workspace Settings (no unrelated global features)
+  const navItems = isPersonalAccount
+    ? [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
+        { name: 'Workspaces', href: '/dashboard/workspaces', icon: Building2, exact: false },
+        { name: 'Agents', href: '/dashboard/agents', icon: Bot, exact: false },
+        { name: 'Usage', href: '/dashboard/usage', icon: Activity, exact: false },
+        { name: 'Settings', href: '/dashboard/settings', icon: User, exact: false },
+        { name: 'Plans', href: '/dashboard/plans', icon: Sparkles, exact: false },
+        { name: 'Billing', href: '/dashboard/billing', icon: CreditCard, exact: false },
+      ]
+    : [
+        {
+          name: activeWorkspace?.name || 'Workspace',
+          href: `/dashboard/workspaces/${activeWorkspace?.id}`,
+          icon: Building2,
+          exact: true,
+        },
+        ...(canManageWorkspace
+          ? [
+              {
+                name: 'Workspace Settings',
+                href: `/dashboard/workspaces/${activeWorkspace?.id}/settings`,
+                icon: Settings,
+                exact: false,
+              },
+            ]
+          : []),
+      ];
 
-  // Calculate remaining days for display
   const getRemainingDays = (endString?: string) => {
     if (!endString) return 'Resets soon';
     const end = new Date(endString);
@@ -110,7 +141,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     return `Resets in ${days} ${days === 1 ? 'day' : 'days'}`;
   };
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
@@ -118,61 +148,14 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const renderNavContent = () => (
     <>
       <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+        {!isPersonalAccount && (
+          <div className="px-3 py-2 mb-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-medium flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <span>Invited Workspace Mode</span>
+          </div>
+        )}
+
         {navItems.map((item) => {
-          if (item.submenu) {
-            return (
-              <div key={item.name} className="space-y-1">
-                <Button
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  variant="ghost"
-                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-md h-9 transition-colors ${
-                    isSettingsActive
-                      ? 'text-foreground bg-muted/40'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <item.icon className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    <span>{item.name}</span>
-                  </div>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 text-muted-foreground ${
-                      isSettingsOpen ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </Button>
-
-                <AnimatePresence initial={false}>
-                  {isSettingsOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden pl-6 space-y-1"
-                    >
-                      {item.submenu.map((sub) => {
-                        const isSubActive = pathname === sub.href || (sub.href.startsWith('/dashboard/billing') && pathname === '/dashboard/billing');
-                        return (
-                          <Link
-                            key={sub.name}
-                            href={sub.href}
-                            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
-                              isSubActive
-                                ? 'text-primary dark:text-foreground font-bold bg-muted/40'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/15'
-                            }`}
-                          >
-                            <span>{sub.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          }
-
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
           return (
@@ -186,44 +169,21 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               }`}
             >
               <item.icon className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span>{item.name}</span>
+              <span className="truncate">{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Credit usage & Theme section */}
-      <div className="p-4 border-t border-border bg-card space-y-4">
-        {/* Credit Usage Box */}
-        {usage ? (
-          <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between text-[11px] font-bold text-foreground">
-              <span>Messages Used</span>
-              <span>
-                {usage.used.chat_messages.toLocaleString()} / {usage.limits.chat_messages_per_month.toLocaleString()}
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-foreground h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, (usage.used.chat_messages / usage.limits.chat_messages_per_month) * 100)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
-              <span>Limit resets</span>
-              <span>{getRemainingDays(usage.period_end)}</span>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-muted/30 border border-border p-3.5 rounded-xl space-y-2 animate-pulse">
-            <div className="h-3 bg-muted rounded w-3/4" />
-            <div className="h-1.5 bg-muted rounded w-full" />
-            <div className="h-2 bg-muted rounded w-1/2" />
-          </div>
-        )}
+      {/* BOTTOM FOOTER SECTION: Account Switcher & Theme */}
+      <div className="p-3 border-t border-border/60 bg-muted/10 space-y-3 shrink-0">
+        {/* Account / Workspace Switcher at the bottom of the sidebar */}
+        <div className="space-y-1.5">
+          <WorkspaceSwitcher dropDirection="up" fullWidth />
+        </div>
 
-        <div className="flex items-center justify-between px-2 text-xs">
-          <span className="font-semibold text-muted-foreground">Dark Theme</span>
+        <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+          <span className="font-medium text-xs text-muted-foreground">Theme</span>
           <ThemeToggle />
         </div>
       </div>
@@ -247,15 +207,15 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
           {/* Redas Logo */}
           <Link href="/dashboard" className="flex items-center">
-            <img src="/redas_logo.png" className="h-8 object-contain shrink-0" alt="Redas logo" />
+            <img src="/redas_logo.png" className="h-8 object-contain shrink-0" alt={`${PLATFORM_NAME} logo`} />
           </Link>
 
           <span className="text-muted-foreground/30 font-light hidden sm:inline">/</span>
 
-          {/* Username / Email & Plan Badge */}
+          {/* Active Workspace Title & Plan Badge */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-foreground hidden sm:inline max-w-[180px] truncate">
-              {session?.user?.name || user?.email || 'User'}
+            <span className="text-xs font-bold text-foreground">
+              {activeWorkspace ? cleanWorkspaceName(activeWorkspace.name) : 'Dashboard'}
             </span>
             <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-wider ${planStyle}`}>
               {planCode}
@@ -301,7 +261,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                       className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted transition-all rounded-md h-9 border-none bg-transparent"
                     >
                       <Settings className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold">General Settings</span>
+                      <span className="font-semibold font-sans">General Settings</span>
                     </Button>
                   </Link>
                   <Button
@@ -310,7 +270,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-red-500 hover:text-red-600 hover:bg-destructive/10 transition-all rounded-md h-9 border-none bg-transparent"
                   >
                     <LogOut className="w-4 h-4 text-red-500" />
-                    <span className="font-semibold">Sign Out</span>
+                    <span className="font-semibold font-sans">Sign Out</span>
                   </Button>
                 </motion.div>
               </>
@@ -349,9 +309,9 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
 
         {/* CONTENT PANEL */}
-        <main className="flex-1 bg-muted/20 overflow-y-auto p-4 md:p-6 antialiased flex flex-col justify-stretch">
-          <div className="bg-card flex-1 border border-border rounded-xl md:rounded-2xl shadow-none overflow-hidden relative flex flex-col">
-            <div className="relative flex-1 overflow-y-auto custom-scrollbar px-4 py-6 md:px-8 md:py-8">
+        <main className="flex-1 bg-muted/20 overflow-y-auto antialiased flex flex-col justify-stretch p-3 md:p-5">
+          <div className="bg-card flex-1 border border-border rounded-xl shadow-none overflow-hidden relative flex flex-col">
+            <div className="relative flex-1 overflow-y-auto custom-scrollbar p-5 md:p-7">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}

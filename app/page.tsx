@@ -5,7 +5,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPlans } from "@/lib/api/plans";
+import { useSession } from "next-auth/react";
+import { useAuthStore } from "@/store/authStore";
+import { fetchPlans, Plan } from "@/lib/api/plans";
 import {
   Bot,
   Zap,
@@ -18,18 +20,26 @@ import {
   Database,
   Cpu,
   Layers,
-  Users
+  Users,
+  User as UserIcon
 } from "lucide-react";
 
 export default function Home() {
-  const { data: plans = [] } = useQuery({
+  const { data: session } = useSession();
+  const authStoreUser = useAuthStore((s) => s.user);
+  const user = session?.user || authStoreUser;
+  const userName = (user as any)?.name || (user as any)?.email;
+
+  const { data: plans = [] } = useQuery<Plan[]>({
     queryKey: ["public-plans"],
     queryFn: fetchPlans,
   });
-  const orderedPlans = [...plans].sort((a, b) => {
-    const order = { free: 0, standard: 1, team: 2, pro: 3 } as const;
-    return order[a.code] - order[b.code];
-  });
+  const orderedPlans = [...plans]
+    .filter((plan) => plan.code !== "team")
+    .sort((a, b) => {
+      const order = { free: 0, standard: 1, pro: 2 } as const;
+      return (order[a.code as keyof typeof order] ?? 99) - (order[b.code as keyof typeof order] ?? 99);
+    });
 
   const container = {
     hidden: { opacity: 0 },
@@ -75,16 +85,38 @@ export default function Home() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Log in
-            </Link>
-            <Button size="sm" className="rounded-md font-semibold px-4 h-9">
-              <Link href="/register">Get Started</Link>
-            </Button>
+          <div className="flex items-center gap-3">
+            {userName ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-primary transition-colors max-w-[160px] truncate"
+                >
+                  <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="truncate">{userName}</span>
+                </Link>
+                <Button size="sm" className="rounded-md font-semibold px-4 h-9 gap-1.5" asChild>
+                  <Link href="/dashboard">
+                    Dashboard
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Log in
+                </Link>
+                <Button size="sm" className="rounded-md font-semibold px-4 h-9" asChild>
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
             <ThemeToggle />
           </div>
         </div>
@@ -112,9 +144,10 @@ export default function Home() {
             <Button
               size="lg"
               className="h-11 px-6 rounded-md font-semibold text-sm group"
+              asChild
             >
-              <Link href="/register" className="flex items-center gap-2">
-                Create My Workspace
+              <Link href={userName ? "/dashboard" : "/register"} className="flex items-center gap-2">
+                {userName ? "Go to Dashboard" : "Create My Workspace"}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </Button>
