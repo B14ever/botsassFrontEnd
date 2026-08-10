@@ -90,7 +90,7 @@ export default function Home() {
               <>
                 <Link
                   href="/dashboard"
-                  className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-primary transition-colors max-w-[160px] truncate"
+                  className="flex items-center gap-2 text-xs font-semibold text-foreground hover:text-primary transition-colors  truncate"
                 >
                   <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
                     {userName.charAt(0).toUpperCase()}
@@ -178,7 +178,7 @@ export default function Home() {
         {/* Demo mockup - plain layout */}
         <section className="px-6 py-12 relative max-w-5xl mx-auto" id="demo">
           <div className="p-1 rounded-lg border border-border bg-card overflow-hidden">
-            <div className="aspect-[16/9] w-full bg-background rounded-md border border-border overflow-hidden flex relative">
+            <div className="w-full bg-background rounded-md border border-border overflow-hidden flex relative">
               <div className="w-16 border-r border-border p-3 flex flex-col items-center gap-5 bg-card">
                 <div className="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center">
                   <Bot className="w-4 h-4 text-foreground" />
@@ -220,7 +220,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="p-4 rounded-lg border border-border bg-card flex-1 min-h-[100px] flex flex-col justify-end space-y-3">
+                <div className="p-4 rounded-lg border border-border bg-card flex-1  flex flex-col justify-end space-y-3">
                   <div className="flex justify-start">
                     <div className="max-w-[75%] bg-secondary p-2.5 rounded-lg text-xs text-foreground border border-border">
                       Do you offer annual billing for teams?
