@@ -21,8 +21,10 @@ import {
   Clock,
   Presentation,
   FileSpreadsheet,
+  Image as ImageIcon,
   Settings,
-  Brain
+  Brain,
+  RotateCcw
 } from "lucide-react";
 import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -32,15 +34,20 @@ import { toast } from "sonner";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import ReactMarkdown from "react-markdown";
+import ArtifactCard from "@/components/projects/ArtifactCard";
 import {
   fetchProject,
   fetchProjectChats,
   createProjectChat,
   fetchProjectChatHistory,
   deleteProjectChat,
+  executeProjectTool,
+  fetchChatJobs,
+  streamJobStatus,
   Project,
   ProjectChat,
-  ProjectMessage
+  ProjectMessage,
+  ToolJob,
 } from "@/lib/api/projects";
 
 type IngestionSource = {
@@ -58,8 +65,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
 
+  // Failed sends stay visible (marked `_failed`) with a `_retry` action
+  // instead of silently disappearing.
+  type PendingMessage = ProjectMessage & { _failed?: boolean; _retry?: () => void };
+
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ProjectMessage[]>([]);
+  const [messages, setMessages] = useState<PendingMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
@@ -74,54 +85,108 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const chatEndRef = useRef<HTMLDivElement>(null);
   const messageFeedRef = useRef<HTMLDivElement>(null);
 
-  type JobState = {
-    id: string;
-    tool_type: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    output_file_url?: string;
-    error?: string;
-    chat_id?: string;
-    created_at: string;
+  type ToolTypeOption = 'create_presentation' | 'write_report' | 'analyze_data' | 'generate_image';
+
+  const TOOL_LABELS: Record<ToolTypeOption, string> = {
+    create_presentation: "presentation",
+    write_report: "report",
+    analyze_data: "spreadsheet",
+    generate_image: "image",
   };
 
-  const [runningJobs, setRunningJobs] = useState<Record<string, JobState>>({});
+  const [jobsById, setJobsById] = useState<Record<string, ToolJob>>({});
+  const [regeneratingJobId, setRegeneratingJobId] = useState<string | null>(null);
 
-  const pollJob = (jobId: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await api.get(`/projects/${projectId}/tools/jobs/${jobId}`);
-        const job = response.data;
-        
-        setRunningJobs((prev) => ({
-          ...prev,
-          [jobId]: job
-        }));
-
-        if (job.status === "completed" || job.status === "failed") {
-          clearInterval(interval);
-          if (job.status === "completed") {
-            toast.success(`Analysis tool completed successfully!`);
-            queryClient.invalidateQueries({ queryKey: ["usage"] });
-          } else {
-            toast.error(`Tool execution failed: ${job.error}`);
-          }
+  // Opens the SSE job-status stream and keeps jobsById in sync as it updates,
+  // replacing the old 2s client polling loop.
+  const startJobStream = (jobId: string) => {
+    streamJobStatus(projectId, jobId, (job) => {
+      setJobsById((prev) => ({ ...prev, [job.id]: job }));
+    })
+      .then((finalJob) => {
+        if (finalJob?.status === "completed") {
+          toast.success("Generation completed!");
+          queryClient.invalidateQueries({ queryKey: ["usage"] });
+        } else if (finalJob?.status === "failed") {
+          toast.error(`Generation failed: ${finalJob.error || "unknown error"}`);
         }
-      } catch (err) {
-        clearInterval(interval);
-        console.error("Error polling job status", err);
-      }
-    }, 2000);
+      })
+      .catch((err) => {
+        console.error("Error streaming job status", err);
+      });
   };
 
-  const [promptForTool, setPromptForTool] = useState<{ type: 'create_presentation' | 'write_report' | 'analyze_data' } | null>(null);
+  const [promptForTool, setPromptForTool] = useState<{ type: ToolTypeOption } | null>(null);
   const [customToolPrompt, setCustomToolPrompt] = useState("");
 
-  const handleExecuteTool = (toolType: 'create_presentation' | 'write_report' | 'analyze_data') => {
+  const handleExecuteTool = (toolType: ToolTypeOption) => {
     if (!activeChatId) {
       toast.error("Please select or start a chat thread first.");
       return;
     }
     setPromptForTool({ type: toolType });
+  };
+
+  const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  const runTool = async (toolType: ToolTypeOption, userPrompt: string) => {
+    if (!activeChatId) return;
+    const chatId = activeChatId;
+
+    // Show the user's request and a placeholder immediately instead of waiting
+    // on the network round-trip — reconciled with the real records below.
+    const tempUserId = genTempId();
+    const tempAssistantId = genTempId();
+    setMessages((prev) => [
+      ...prev,
+      { id: tempUserId, chat_id: chatId, role: "user", content: userPrompt, created_at: new Date().toISOString() },
+      {
+        id: tempAssistantId,
+        chat_id: chatId,
+        role: "assistant",
+        content: `Generating your ${TOOL_LABELS[toolType]}…`,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    try {
+      const { job, user_message, assistant_message } = await executeProjectTool(
+        projectId,
+        chatId,
+        toolType,
+        userPrompt
+      );
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === tempUserId) return user_message;
+          if (m.id === tempAssistantId) return assistant_message;
+          return m;
+        })
+      );
+      setJobsById((prev) => ({ ...prev, [job.id]: job }));
+      startJobStream(job.id);
+      queryClient.invalidateQueries({ queryKey: ["usage"] });
+    } catch (err) {
+      // Drop the placeholder assistant bubble, but keep the user's request
+      // visible with a retry action instead of losing it.
+      setMessages((prev) =>
+        prev
+          .filter((m) => m.id !== tempAssistantId)
+          .map((m) =>
+            m.id === tempUserId
+              ? {
+                  ...m,
+                  _failed: true,
+                  _retry: () => {
+                    setMessages((p) => p.filter((x) => x.id !== tempUserId));
+                    void runTool(toolType, userPrompt);
+                  },
+                }
+              : m
+          )
+      );
+      throw err;
+    }
   };
 
   const handleGenerateWithPrompt = async () => {
@@ -130,125 +195,29 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     const toolType = promptForTool.type;
     const userPrompt = customToolPrompt.trim();
 
-    // Reset prompt state immediately to hide UI
     setPromptForTool(null);
     setCustomToolPrompt("");
-
-    let actionLabel = "";
-    if (toolType === "create_presentation") {
-      actionLabel = "presentation slides deck";
-    } else if (toolType === "write_report") {
-      actionLabel = "detailed report document";
-    } else {
-      actionLabel = "data analysis spreadsheet";
-    }
-
-    const fullMessage = `I want to generate a ${actionLabel}. Please focus on: ${userPrompt}`;
-
-    setInputMessage("");
     setIsSending(true);
 
-    const tempUserMsg: ProjectMessage = {
-      id: "temp-user",
-      chat_id: activeChatId,
-      role: "user",
-      content: fullMessage,
-      created_at: new Date().toISOString()
-    };
-    setMessages((prev) => [...prev, tempUserMsg]);
-
-    const tempAssistantMsg: ProjectMessage = {
-      id: "temp-assistant",
-      chat_id: activeChatId,
-      role: "assistant",
-      content: "",
-      created_at: new Date().toISOString()
-    };
-    setMessages((prev) => [...prev, tempAssistantMsg]);
-
     try {
-      const activeToken = token || (session as any)?.accessToken;
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
-
-      // 1. Trigger the background tool execution concurrently
-      void (async () => {
-        try {
-          const response = await api.post(`/projects/${projectId}/tools/execute`, {
-            chat_id: activeChatId,
-            tool_type: toolType,
-            input_file_ids: []
-          });
-          const job = response.data;
-          setRunningJobs((prev) => ({
-            ...prev,
-            [job.id]: {
-              id: job.id,
-              tool_type: job.tool_type,
-              status: job.status,
-              chat_id: activeChatId,
-              created_at: new Date().toISOString()
-            }
-          }));
-          pollJob(job.id);
-          toast.success("AI analysis job queued!");
-        } catch (err: any) {
-          toast.error(err.response?.data?.error || err.message || "Failed to trigger tool");
-        }
-      })();
-
-      // 2. Stream the agent's explanation / discussion into the chat
-      const response = await fetch(`${baseUrl}/projects/${projectId}/chats/${activeChatId}/ask`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${activeToken}`,
-        },
-        body: JSON.stringify({ message: fullMessage }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to connect to assistant stream");
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantReplyText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("data: ")) {
-              const data = trimmed.substring(6);
-              assistantReplyText += data;
-
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === "temp-assistant"
-                    ? { ...msg, content: assistantReplyText }
-                    : msg
-                )
-              );
-            }
-          }
-        }
-      }
-
-      const cleanHistory = await fetchProjectChatHistory(projectId, activeChatId);
-      setMessages(cleanHistory || []);
-      queryClient.invalidateQueries({ queryKey: ["usage"] });
-
+      await runTool(toolType, userPrompt);
+      toast.success("Generation started!");
     } catch (err: any) {
-      toast.error(err.message || "Failed to get reply");
-      setMessages((prev) => prev.filter((m) => m.id !== "temp-user" && m.id !== "temp-assistant"));
+      toast.error(err.response?.data?.error || err.message || "Failed to trigger tool");
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleRegenerate = async (job: ToolJob) => {
+    if (regeneratingJobId) return;
+    setRegeneratingJobId(job.id);
+    try {
+      await runTool(job.tool_type as ToolTypeOption, job.user_prompt || "Regenerate this artifact.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
+    } finally {
+      setRegeneratingJobId(null);
     }
   };
 
@@ -276,16 +245,30 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   });
   const sources = sourcesData || [];
 
-  // Load chat history when active chat changes
+  // Load chat history + any in-flight/completed generation jobs when the
+  // active chat changes, so artifacts survive a page refresh.
   useEffect(() => {
     if (!activeChatId) {
       setMessages([]);
+      setJobsById({});
       return;
     }
     const loadHistory = async () => {
       try {
-        const history = await fetchProjectChatHistory(projectId, activeChatId);
+        const [history, jobs] = await Promise.all([
+          fetchProjectChatHistory(projectId, activeChatId),
+          fetchChatJobs(projectId, activeChatId).catch(() => []),
+        ]);
         setMessages(history || []);
+
+        const jobsMap: Record<string, ToolJob> = {};
+        for (const job of jobs) {
+          jobsMap[job.id] = job;
+          if (job.status === "pending" || job.status === "processing") {
+            startJobStream(job.id);
+          }
+        }
+        setJobsById(jobsMap);
       } catch (err) {
         toast.error("Failed to load chat history");
       }
@@ -368,38 +351,28 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     createChatMutation.mutate(title || `Chat Thread #${chats.length + 1}`);
   };
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent, retryText?: string) => {
     e.preventDefault();
-    if (!inputMessage.trim() || !activeChatId || isSending) return;
+    const userPrompt = (retryText ?? inputMessage).trim();
+    if (!userPrompt || !activeChatId || isSending) return;
 
-    const userPrompt = inputMessage.trim();
-    setInputMessage("");
+    const chatId = activeChatId;
+    if (!retryText) setInputMessage("");
     setIsSending(true);
 
     // Append user message immediately
-    const tempUserMsg: ProjectMessage = {
-      id: "temp-user",
-      chat_id: activeChatId,
-      role: "user",
-      content: userPrompt,
-      created_at: new Date().toISOString()
-    };
-    setMessages((prev) => [...prev, tempUserMsg]);
-
-    // Append an empty assistant message to stream into
-    const tempAssistantMsg: ProjectMessage = {
-      id: "temp-assistant",
-      chat_id: activeChatId,
-      role: "assistant",
-      content: "",
-      created_at: new Date().toISOString()
-    };
-    setMessages((prev) => [...prev, tempAssistantMsg]);
+    const tempUserId = genTempId();
+    const tempAssistantId = genTempId();
+    setMessages((prev) => [
+      ...prev,
+      { id: tempUserId, chat_id: chatId, role: "user", content: userPrompt, created_at: new Date().toISOString() },
+      { id: tempAssistantId, chat_id: chatId, role: "assistant", content: "", created_at: new Date().toISOString() },
+    ]);
 
     try {
       const activeToken = token || (session as any)?.accessToken;
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
-      const response = await fetch(`${baseUrl}/projects/${projectId}/chats/${activeChatId}/ask`, {
+      const response = await fetch(`${baseUrl}/projects/${projectId}/chats/${chatId}/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -433,7 +406,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               // Update assistant bubble content
               setMessages((prev) =>
                 prev.map((msg) =>
-                  msg.id === "temp-assistant"
+                  msg.id === tempAssistantId
                     ? { ...msg, content: assistantReplyText }
                     : msg
                 )
@@ -444,14 +417,31 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       }
 
       // Re-fetch clean history once complete to replace temp ids
-      const cleanHistory = await fetchProjectChatHistory(projectId, activeChatId);
+      const cleanHistory = await fetchProjectChatHistory(projectId, chatId);
       setMessages(cleanHistory || []);
       queryClient.invalidateQueries({ queryKey: ["usage"] });
 
     } catch (err: any) {
       toast.error(err.message || "Failed to get reply");
-      // Remove temp messages on error to keep history clean
-      setMessages((prev) => prev.filter((m) => m.id !== "temp-user" && m.id !== "temp-assistant"));
+      // Keep the user's text on screen instead of losing it — drop the
+      // empty assistant placeholder and mark the request as failed with
+      // a one-click retry, rather than removing it outright.
+      setMessages((prev) =>
+        prev
+          .filter((m) => m.id !== tempAssistantId)
+          .map((m) =>
+            m.id === tempUserId
+              ? {
+                  ...m,
+                  _failed: true,
+                  _retry: () => {
+                    setMessages((p) => p.filter((x) => x.id !== tempUserId));
+                    void handleSend({ preventDefault: () => {} } as React.FormEvent, userPrompt);
+                  },
+                }
+              : m
+          )
+      );
     } finally {
       setIsSending(false);
     }
@@ -641,28 +631,47 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               <div ref={messageFeedRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
                 {messages.map((m) => {
                   const isAssistant = m.role === "assistant";
+                  const job = m.generation_job_id ? jobsById[m.generation_job_id] : undefined;
+                  const isFailed = !!m._failed;
                   return (
                     <div
                       key={m.id}
                       className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
                     >
-                      <div
-                        className={`max-w-[80%] p-4 rounded-lg text-sm leading-relaxed border ${
-                          isAssistant
-                            ? "bg-secondary border-border text-foreground rounded-tl-sm prose prose-sm"
-                            : "bg-primary text-primary-foreground border-primary/20 rounded-tr-sm font-medium"
-                        }`}
-                      >
-                        {isAssistant ? (
-                          <ReactMarkdown>{m.content}</ReactMarkdown>
-                        ) : (
-                          m.content
-                        )}
-                      </div>
+                      {job ? (
+                        <ArtifactCard
+                          job={job}
+                          onRegenerate={() => handleRegenerate(job)}
+                          isRegenerating={regeneratingJobId === job.id}
+                        />
+                      ) : isFailed ? (
+                        <button
+                          onClick={() => m._retry?.()}
+                          title="Failed to send — click to retry"
+                          className="max-w-[80%] p-4 rounded-lg text-sm leading-relaxed border text-left bg-destructive/10 border-destructive/30 text-destructive font-medium rounded-tr-sm hover:bg-destructive/15 transition-colors flex items-center gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4 shrink-0" />
+                          <span>{m.content}</span>
+                        </button>
+                      ) : (
+                        <div
+                          className={`max-w-[80%] p-4 rounded-lg text-sm leading-relaxed border ${
+                            isAssistant
+                              ? "bg-secondary border-border text-foreground rounded-tl-sm prose prose-sm"
+                              : "bg-primary text-primary-foreground border-primary/20 rounded-tr-sm font-medium"
+                          }`}
+                        >
+                          {isAssistant ? (
+                            <ReactMarkdown>{m.content}</ReactMarkdown>
+                          ) : (
+                            m.content
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
-                {messages.length === 0 && !isSending && Object.keys(runningJobs).length === 0 && (
+                {messages.length === 0 && !isSending && (
                   <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground/50 py-20">
                     <Sparkles className="w-10 h-10 mb-3 opacity-30 animate-pulse text-primary" />
                     <p className="text-sm">Thread is empty. Send a prompt to query project sources.</p>
@@ -670,70 +679,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 )}
                 <div ref={chatEndRef} />
               </div>
-
-              {/* Active & Completed Document Generations */}
-              {Object.keys(runningJobs).length > 0 && (
-                <div className="px-6 py-3 border-t border-border bg-black/30 flex flex-col gap-2 max-h-[160px] overflow-y-auto custom-scrollbar">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 font-outfit">Document Generations</span>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setRunningJobs({})}
-                      className="text-muted-foreground/60 hover:text-foreground p-0 h-auto text-[9px] font-bold"
-                    >
-                      Clear All
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {Object.values(runningJobs).map((job) => {
-                      const isPending = job.status === "pending" || job.status === "processing";
-                      const isCompleted = job.status === "completed";
-                      const isFailed = job.status === "failed";
-                      return (
-                        <div key={job.id} className="bg-card border-border rounded-lg shadow-none border border-border p-2.5 rounded-xl flex items-center justify-between gap-3 bg-secondary hover:bg-secondary/80 transition-all">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                              {job.tool_type === "create_presentation" && <Presentation className="w-3.5 h-3.5 text-primary" />}
-                              {job.tool_type === "write_report" && <FileText className="w-3.5 h-3.5 text-primary" />}
-                              {job.tool_type === "analyze_data" && <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-foreground text-[11px] font-bold truncate">
-                                {job.tool_type === "create_presentation" && "Slides Deck"}
-                                {job.tool_type === "write_report" && "Report PDF"}
-                                {job.tool_type === "analyze_data" && "Spreadsheet XLSX"}
-                              </p>
-                              <p className="text-muted-foreground text-[9px] mt-0.5 capitalize flex items-center gap-1">
-                                {isPending ? (
-                                  <>
-                                    <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
-                                    Compiling...
-                                  </>
-                                ) : (
-                                  job.status
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          {isCompleted && (
-                            <a
-                              href={job.output_file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-primary hover:bg-primary/90 text-black font-bold text-[10px] py-1.5 px-3 rounded-lg shrink-0 transition-all shadow-lg shadow-primary/10"
-                            >
-                              Download
-                            </a>
-                          )}
-                          {isFailed && (
-                            <span className="text-red-400 text-[10px] font-bold cursor-help" title={job.error}>Failed</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* Tool Prompt Configuration Panel */}
               {promptForTool && (
@@ -745,6 +690,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                         {promptForTool.type === 'create_presentation' && "Configure Slides Deck"}
                         {promptForTool.type === 'write_report' && "Configure Report Document"}
                         {promptForTool.type === 'analyze_data' && "Configure Data Spreadsheet"}
+                        {promptForTool.type === 'generate_image' && "Configure Image"}
                       </span>
                     </div>
                     <Button
@@ -769,7 +715,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           ? "e.g. 5 slides outlining project goals, backend architecture, and UI mockup ideas"
                           : promptForTool.type === 'write_report'
                           ? "e.g. A comprehensive summary of our security audits and mitigation steps"
-                          : "e.g. Extract a spreadsheet of financial projections, costs, and revenues per quarter"
+                          : promptForTool.type === 'analyze_data'
+                          ? "e.g. Extract a spreadsheet of financial projections, costs, and revenues per quarter"
+                          : "e.g. A clean architecture diagram illustrating our workspace's chat pipeline"
                       }
                       value={customToolPrompt}
                       onChange={(e) => setCustomToolPrompt(e.target.value)}
@@ -821,6 +769,15 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <FileSpreadsheet className="w-4 h-4 text-primary" />
                   Analyze Data
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleExecuteTool('generate_image')}
+                  className="text-muted-foreground hover:text-foreground border border-border hover:bg-secondary rounded-xl text-xs font-bold py-1 px-3 flex items-center gap-1.5 h-9 shrink-0"
+                >
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  Generate Image
+                </Button>
               </div>
 
               {/* Chat Input */}
@@ -860,7 +817,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               </div>
 
               {/* Action Suggestion Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full max-w-4xl">
                 <SuggestionCard
                   icon={<Presentation className="w-5 h-5 text-primary" />}
                   title="Create presentation"
@@ -870,7 +827,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 <SuggestionCard
                   icon={<FileText className="w-5 h-5 text-primary" />}
                   title="Write report"
-                  description="Draft structured PDF reports containing key metrics from project files."
+                  description="Draft structured Word reports containing key metrics from project files."
                   onClick={() => handleExecuteTool('write_report')}
                 />
                 <SuggestionCard
@@ -878,6 +835,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   title="Analyze data"
                   description="Inspect financial or audit spreadsheets to extract insights."
                   onClick={() => handleExecuteTool('analyze_data')}
+                />
+                <SuggestionCard
+                  icon={<ImageIcon className="w-5 h-5 text-primary" />}
+                  title="Generate image"
+                  description="Create illustrations, diagrams, or visuals from a text prompt."
+                  onClick={() => handleExecuteTool('generate_image')}
                 />
               </div>
 

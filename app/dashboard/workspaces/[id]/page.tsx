@@ -7,10 +7,12 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   UserPlus, Users, Send, Bot, Check, Copy, Sparkles, MessageSquare,
-  FileText, Upload, BookOpen, Plus, Globe, FileUp, Settings, History
+  FileText, Upload, BookOpen, Plus, Globe, FileUp, Settings, History,
+  Presentation, FileSpreadsheet, Image as ImageIcon, X, Loader2, RotateCcw
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Sidebar from "@/components/shared/Sidebar";
+import ArtifactCard from "@/components/projects/ArtifactCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,7 +40,8 @@ import {
 import {
   fetchProjectSources, ingestProjectUrl, ingestProjectPdf,
   fetchProjectChats, createProjectChat, fetchProjectChatHistory,
-  type KnowledgeSource, type ProjectChat, type ProjectMessage
+  executeProjectTool, fetchChatJobs, streamJobStatus,
+  type KnowledgeSource, type ProjectChat, type ProjectMessage, type ToolJob
 } from "@/lib/api/projects";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { getAxiosErrorMessage, type LimitReachedError, isLimitReachedError } from "@/lib/api/errors";
@@ -128,8 +131,29 @@ export default function SingleWorkspaceDashboardPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [limitError, setLimitError] = useState<LimitReachedError | null>(null);
+  // Messages sent but not yet reflected in the fetched history — shown
+  // immediately so the user's own text never waits on a round-trip. Failed
+  // sends stay visible (marked `_failed`) with a `_retry` action instead of
+  // silently disappearing.
+  type PendingMessage = ProjectMessage & { _failed?: boolean; _retry?: () => void };
+  const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
+  const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Document generation tools (slides / report / spreadsheet / image)
+  type ToolTypeOption = 'create_presentation' | 'write_report' | 'analyze_data' | 'generate_image';
+  const TOOL_LABELS: Record<ToolTypeOption, string> = {
+    create_presentation: "presentation",
+    write_report: "report",
+    analyze_data: "spreadsheet",
+    generate_image: "image",
+  };
+  const [jobsById, setJobsById] = useState<Record<string, ToolJob>>({});
+  const [regeneratingJobId, setRegeneratingJobId] = useState<string | null>(null);
+  const [promptForTool, setPromptForTool] = useState<{ type: ToolTypeOption } | null>(null);
+  const [customToolPrompt, setCustomToolPrompt] = useState("");
+  const [isGeneratingTool, setIsGeneratingTool] = useState(false);
 
   // Fetch Workspace Details
   const { data: workspace } = useQuery({
@@ -203,6 +227,8 @@ export default function SingleWorkspaceDashboardPage() {
     enabled: !!workspaceId && !!activeChatId,
   });
 
+  const displayMessages = useMemo<PendingMessage[]>(() => [...messages, ...pendingMessages], [messages, pendingMessages]);
+
   // Create Private Chat Thread Mutation
   const createChatMutation = useMutation({
     mutationFn: () => createProjectChat(workspaceId!, `Chat ${chatThreads.length + 1}`),
@@ -234,7 +260,7 @@ export default function SingleWorkspaceDashboardPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [displayMessages, isTyping]);
 
   function handleInviteSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -286,6 +312,20 @@ export default function SingleWorkspaceDashboardPage() {
     setLimitError(null);
     setIsTyping(true);
 
+    // Show the user's message instantly instead of waiting on the
+    // POST + refetch round-trip to complete.
+    const tempId = genTempId();
+    setPendingMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        chat_id: activeChatId || "pending",
+        role: "user",
+        content: userMessage,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
     let targetChatId = activeChatId;
     if (!targetChatId) {
       if (chatThreads.length > 0) {
@@ -305,8 +345,27 @@ export default function SingleWorkspaceDashboardPage() {
         setActiveChatId(targetChatId);
       }
       queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
-      refetchMessages();
+      await refetchMessages();
+      // Real history (from the refetch above) has already landed by now,
+      // so dropping the placeholder here causes no visible gap.
+      setPendingMessages((prev) => prev.filter((m) => m.id !== tempId));
     } catch (err: unknown) {
+      // Keep the user's text on screen instead of losing it — mark the
+      // bubble as failed and let them retry with one click.
+      setPendingMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId
+            ? {
+                ...m,
+                _failed: true,
+                _retry: () => {
+                  setPendingMessages((p) => p.filter((x) => x.id !== tempId));
+                  void handleSend(userMessage);
+                },
+              }
+            : m
+        )
+      );
       if (isLimitReachedError(err)) {
         setLimitError(err);
       } else {
@@ -324,7 +383,252 @@ export default function SingleWorkspaceDashboardPage() {
     }
   };
 
+  // Opens the SSE job-status stream and keeps jobsById in sync as it updates.
+  const startJobStream = (jobId: string) => {
+    streamJobStatus(workspaceId!, jobId, (job) => {
+      setJobsById((prev) => ({ ...prev, [job.id]: job }));
+    })
+      .then((finalJob) => {
+        if (finalJob?.status === "completed") {
+          toast.success("Generation completed!");
+        } else if (finalJob?.status === "failed") {
+          toast.error(`Generation failed: ${finalJob.error || "unknown error"}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error streaming job status", err);
+      });
+  };
+
+  // Tool execution requires a real, persisted chat thread — create one on
+  // the fly if the user hasn't started a chat yet.
+  const ensureActiveChatId = async (): Promise<string> => {
+    if (activeChatId) return activeChatId;
+    if (chatThreads.length > 0) {
+      const id = chatThreads[0].id;
+      setActiveChatId(id);
+      return id;
+    }
+    const newChat = await createProjectChat(workspaceId!, "Chat 1");
+    queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
+    setActiveChatId(newChat.id);
+    return newChat.id;
+  };
+
+  const runTool = async (toolType: ToolTypeOption, userPrompt: string) => {
+    const chatId = await ensureActiveChatId();
+
+    const tempUserId = genTempId();
+    const tempAssistantId = genTempId();
+    setPendingMessages((prev) => [
+      ...prev,
+      { id: tempUserId, chat_id: chatId, role: "user", content: userPrompt, created_at: new Date().toISOString() },
+      {
+        id: tempAssistantId,
+        chat_id: chatId,
+        role: "assistant",
+        content: `Generating your ${TOOL_LABELS[toolType]}…`,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    try {
+      const { job, user_message, assistant_message } = await executeProjectTool(
+        workspaceId!,
+        chatId,
+        toolType,
+        userPrompt
+      );
+      setPendingMessages((prev) => prev.filter((m) => m.id !== tempUserId && m.id !== tempAssistantId));
+      queryClient.setQueryData<ProjectMessage[]>(
+        ["workspace-messages", workspaceId, chatId],
+        (old = []) => [...old, user_message, assistant_message]
+      );
+      setJobsById((prev) => ({ ...prev, [job.id]: job }));
+      startJobStream(job.id);
+      queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
+    } catch (err) {
+      // Drop the placeholder assistant bubble, but keep the user's request
+      // visible with a retry action instead of losing it.
+      setPendingMessages((prev) =>
+        prev
+          .filter((m) => m.id !== tempAssistantId)
+          .map((m) =>
+            m.id === tempUserId
+              ? {
+                  ...m,
+                  _failed: true,
+                  _retry: () => {
+                    setPendingMessages((p) => p.filter((x) => x.id !== tempUserId));
+                    void runTool(toolType, userPrompt);
+                  },
+                }
+              : m
+          )
+      );
+      throw err;
+    }
+  };
+
+  const handleExecuteTool = (toolType: ToolTypeOption) => {
+    setPromptForTool({ type: toolType });
+  };
+
+  const handleGenerateWithPrompt = async () => {
+    if (!promptForTool || !customToolPrompt.trim() || isGeneratingTool) return;
+
+    const toolType = promptForTool.type;
+    const userPrompt = customToolPrompt.trim();
+    setPromptForTool(null);
+    setCustomToolPrompt("");
+    setIsGeneratingTool(true);
+
+    try {
+      await runTool(toolType, userPrompt);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to trigger tool");
+    } finally {
+      setIsGeneratingTool(false);
+    }
+  };
+
+  const handleRegenerate = async (job: ToolJob) => {
+    if (regeneratingJobId) return;
+    setRegeneratingJobId(job.id);
+    try {
+      await runTool(job.tool_type as ToolTypeOption, job.user_prompt || "Regenerate this artifact.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
+    } finally {
+      setRegeneratingJobId(null);
+    }
+  };
+
+  // Hydrate generation jobs for the active chat (and resume streaming any
+  // still in flight) so refreshing the page never loses an artifact.
+  useEffect(() => {
+    if (!activeChatId) {
+      setJobsById({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const jobs = await fetchChatJobs(workspaceId!, activeChatId);
+        if (cancelled) return;
+        const jobsMap: Record<string, ToolJob> = {};
+        for (const job of jobs) {
+          jobsMap[job.id] = job;
+          if (job.status === "pending" || job.status === "processing") {
+            startJobStream(job.id);
+          }
+        }
+        setJobsById(jobsMap);
+      } catch {
+        // Non-fatal — artifacts just won't render until the next successful fetch.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, activeChatId]);
+
   const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "User";
+
+  const toolQuickActionsBar = (
+    <div className="flex gap-2 overflow-x-auto pb-0.5">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExecuteTool("create_presentation")}
+        className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
+      >
+        <Presentation className="w-3.5 h-3.5 text-primary" /> Slides
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExecuteTool("write_report")}
+        className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
+      >
+        <FileText className="w-3.5 h-3.5 text-primary" /> Report
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExecuteTool("analyze_data")}
+        className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
+      >
+        <FileSpreadsheet className="w-3.5 h-3.5 text-primary" /> Spreadsheet
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExecuteTool("generate_image")}
+        className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
+      >
+        <ImageIcon className="w-3.5 h-3.5 text-primary" /> Image
+      </Button>
+    </div>
+  );
+
+  const toolPromptPanel = promptForTool && (
+    <div className="p-3 rounded-xl border border-border/60 bg-secondary/40 space-y-2.5 animate-in slide-in-from-bottom duration-200">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
+          {promptForTool.type === "create_presentation" && "Configure Slides"}
+          {promptForTool.type === "write_report" && "Configure Report"}
+          {promptForTool.type === "analyze_data" && "Configure Spreadsheet"}
+          {promptForTool.type === "generate_image" && "Configure Image"}
+        </span>
+        <button
+          onClick={() => {
+            setPromptForTool(null);
+            setCustomToolPrompt("");
+          }}
+          className="text-muted-foreground/60 hover:text-foreground"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          autoFocus
+          placeholder={
+            promptForTool.type === "create_presentation"
+              ? "e.g. 5 slides on our Q3 roadmap"
+              : promptForTool.type === "write_report"
+              ? "e.g. A summary of onboarding metrics and blockers"
+              : promptForTool.type === "analyze_data"
+              ? "e.g. Extract cost and revenue figures per quarter"
+              : "e.g. A clean diagram of our support ticket workflow"
+          }
+          value={customToolPrompt}
+          onChange={(e) => setCustomToolPrompt(e.target.value)}
+          className="flex-1 text-xs h-9"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && customToolPrompt.trim() && !isGeneratingTool) {
+              e.preventDefault();
+              void handleGenerateWithPrompt();
+            }
+          }}
+        />
+        <Button
+          size="sm"
+          onClick={handleGenerateWithPrompt}
+          disabled={!customToolPrompt.trim() || isGeneratingTool}
+          className="h-9 text-xs font-bold"
+        >
+          {isGeneratingTool ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Generate"}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <Sidebar>
@@ -438,7 +742,7 @@ export default function SingleWorkspaceDashboardPage() {
           
           {/* Main Content Area */}
           <div className="flex-1 p-6 overflow-y-auto min-h-0 flex flex-col">
-            {messages.length === 0 ? (
+            {displayMessages.length === 0 ? (
               
               /* ── WELCOME HERO VIEW (Wireframe Sketch with Centered Input) ── */
               <div className="my-auto flex flex-col items-center justify-center text-center max-w-xl mx-auto w-full space-y-6">
@@ -496,41 +800,67 @@ export default function SingleWorkspaceDashboardPage() {
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
+
+                  <div className="mt-3 space-y-2.5">
+                    {toolQuickActionsBar}
+                    {toolPromptPanel}
+                  </div>
                 </div>
               </div>
             ) : (
               
               /* ── ACTIVE CHAT MESSAGES ── */
               <div className="space-y-4 my-auto w-full">
-                {messages.map((msg, index) => (
-                  <div
-                    key={msg.id || index}
-                    className={`flex gap-3 text-xs ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {msg.role === "assistant" && (
-                      <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                        <Bot className="w-3.5 h-3.5" />
-                      </div>
-                    )}
+                {displayMessages.map((msg, index) => {
+                  const job = msg.generation_job_id ? jobsById[msg.generation_job_id] : undefined;
+                  const isFailed = !!msg._failed;
+                  return (
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed ${
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
-                          : "bg-secondary/70 border border-border text-foreground rounded-tl-none"
+                      key={msg.id || index}
+                      className={`flex gap-3 text-xs ${
+                        msg.role === "user" ? "justify-end" : "justify-start"
                       }`}
                     >
-                      {msg.role === "user" ? (
-                        msg.content
+                      {msg.role === "assistant" && (
+                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                          <Bot className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                      {job ? (
+                        <ArtifactCard
+                          job={job}
+                          onRegenerate={() => handleRegenerate(job)}
+                          isRegenerating={regeneratingJobId === job.id}
+                        />
+                      ) : isFailed ? (
+                        <button
+                          onClick={() => msg._retry?.()}
+                          title="Failed to send — click to retry"
+                          className="max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed text-left bg-destructive/10 border border-destructive/30 text-destructive font-medium rounded-tr-none hover:bg-destructive/15 transition-colors flex items-center gap-2"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                          <span>{msg.content}</span>
+                        </button>
                       ) : (
-                        <div className="prose prose-invert prose-xs max-w-none">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <div
+                          className={`max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed ${
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
+                              : "bg-secondary/70 border border-border text-foreground rounded-tl-none"
+                          }`}
+                        >
+                          {msg.role === "user" ? (
+                            msg.content
+                          ) : (
+                            <div className="prose prose-invert prose-xs max-w-none">
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {isTyping && (
                   <div className="flex gap-3 text-xs justify-start">
@@ -551,7 +881,7 @@ export default function SingleWorkspaceDashboardPage() {
           </div>
 
           {/* PINNED BOTTOM INPUT BAR (Active Chat) */}
-          {messages.length > 0 && (
+          {displayMessages.length > 0 && (
             <div className="p-4 border-t border-border/40 bg-card shrink-0 space-y-2">
               {limitError && (
                 <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center justify-between">
@@ -563,6 +893,9 @@ export default function SingleWorkspaceDashboardPage() {
                   </Link>
                 </div>
               )}
+
+              {toolPromptPanel}
+              {toolQuickActionsBar}
 
               <div className="flex items-center gap-2 bg-background border border-input rounded-xl p-1.5 shadow-2xs focus-within:ring-2 focus-within:ring-primary/20">
                 <Input
