@@ -1092,7 +1092,7 @@ export default function SingleWorkspaceDashboardPage() {
                     placeholder="Paste text guidelines, company FAQs, or knowledge snippet..."
                     value={sourceText}
                     onChange={(e) => setSourceText(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-md border border-input bg-background min-h-[100px] focus:outline-hidden"
+                    className="w-full text-xs p-2.5 rounded-md border border-input bg-background min-h-25 focus:outline-hidden"
                     required
                   />
                 </div>

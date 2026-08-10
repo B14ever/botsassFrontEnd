@@ -176,9 +176,9 @@ function WidgetChatContent() {
            <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2">
               <div className="bg-secondary border border-border p-4 rounded-md rounded-tl-none">
                 <div className="flex gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-duration:0.6s]" />
-                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+                <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce animation-duration-[0.6s]" />
+                <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce animation-duration-[0.6s] [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce animation-duration-[0.6s] [animation-delay:0.4s]" />
                 </div>
               </div>
            </div>

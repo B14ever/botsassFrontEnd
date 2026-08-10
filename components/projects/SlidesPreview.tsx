@@ -27,9 +27,9 @@ export default function SlidesPreview({ content }: { content: SlidesContent }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-border shadow-lg">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border shadow-lg">
         {isCover ? (
-          <div className="w-full h-full bg-gradient-to-br from-[#1F3A56] to-[#101B2B] flex flex-col items-center justify-center text-center px-10">
+          <div className="w-full h-full bg-linear-to-br from-[#1F3A56] to-[#101B2B] flex flex-col items-center justify-center text-center px-10">
             <h2 className="text-white text-2xl md:text-3xl font-black font-outfit leading-tight">
               {content.title || "Untitled Presentation"}
             </h2>
@@ -38,7 +38,7 @@ export default function SlidesPreview({ content }: { content: SlidesContent }) {
             )}
           </div>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-white to-[#F0F3F4] dark:from-secondary dark:to-secondary/70 flex flex-col px-8 md:px-12 py-8 md:py-10">
+            <div className="w-full h-full bg-linear-to-br from-white to-[#F0F3F4] dark:from-secondary dark:to-secondary/70 flex flex-col px-8 md:px-12 py-8 md:py-10">
             <h3 className="text-[#1F3A56] dark:text-primary text-lg md:text-2xl font-black font-outfit mb-4 md:mb-6 shrink-0">
               {slide?.title}
             </h3>
