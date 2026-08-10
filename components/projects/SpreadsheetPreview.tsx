@@ -17,16 +17,17 @@ export default function SpreadsheetPreview({ content }: { content: SpreadsheetCo
   }
 
   const sheet = sheets[Math.min(activeSheet, sheets.length - 1)];
+  const rows = sheet.rows || [];
 
   return (
-    <div className="rounded-lg border border-border bg-secondary/40 overflow-hidden">
+    <div className="rounded-xl border border-border bg-secondary/40 overflow-hidden shadow-lg">
       {sheets.length > 1 && (
-        <div className="flex gap-1 px-2 pt-2 overflow-x-auto">
+        <div className="flex gap-1 overflow-x-auto px-3 pt-3">
           {sheets.map((s, i) => (
             <button
               key={i}
               onClick={() => setActiveSheet(i)}
-              className={`text-[9px] font-bold px-2 py-1 rounded-md shrink-0 ${
+              className={`text-xs font-bold px-2.5 py-1 rounded-md shrink-0 transition-colors ${
                 i === activeSheet
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary"
@@ -37,14 +38,17 @@ export default function SpreadsheetPreview({ content }: { content: SpreadsheetCo
           ))}
         </div>
       )}
-      <div className="max-h-56 overflow-auto custom-scrollbar">
-        <table className="w-full text-[10px] border-collapse">
-          <thead className="sticky top-0 bg-secondary">
+      <div className="overflow-auto custom-scrollbar max-h-[65vh]">
+        <table className="w-full border-collapse text-xs">
+          <thead className="sticky top-0 bg-secondary z-10">
             <tr>
+              <th className="text-left font-bold text-muted-foreground/60 px-2.5 py-2 border-b border-border w-8">
+                #
+              </th>
               {(sheet.headers || []).map((h, i) => (
                 <th
                   key={i}
-                  className="text-left font-bold text-foreground px-2.5 py-1.5 border-b border-border whitespace-nowrap"
+                  className="text-left font-bold text-foreground border-b border-border whitespace-nowrap px-3 py-2"
                 >
                   {h}
                 </th>
@@ -52,10 +56,11 @@ export default function SpreadsheetPreview({ content }: { content: SpreadsheetCo
             </tr>
           </thead>
           <tbody>
-            {(sheet.rows || []).slice(0, 12).map((row, ri) => (
+            {rows.map((row, ri) => (
               <tr key={ri} className={ri % 2 === 1 ? "bg-secondary/50" : ""}>
+                <td className="px-2.5 py-1.5 text-muted-foreground/50 font-mono text-[10px]">{ri + 1}</td>
                 {row.cells.map((cell, ci) => (
-                  <td key={ci} className="px-2.5 py-1 text-muted-foreground whitespace-nowrap">
+                  <td key={ci} className="text-muted-foreground whitespace-nowrap px-3 py-1.5">
                     {String(cell)}
                   </td>
                 ))}

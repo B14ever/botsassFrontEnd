@@ -227,7 +227,17 @@ export default function SingleWorkspaceDashboardPage() {
     enabled: !!workspaceId && !!activeChatId,
   });
 
-  const displayMessages = useMemo<PendingMessage[]>(() => [...messages, ...pendingMessages], [messages, pendingMessages]);
+  // pendingMessages (including stale failed ones) must be scoped to the
+  // active chat and merged by actual timestamp, not just appended —
+  // otherwise a failed message from another thread leaks into view, or
+  // keeps rendering after every new exchange as if it were "the latest" chat.
+  const displayMessages = useMemo<PendingMessage[]>(
+    () =>
+      [...messages, ...pendingMessages.filter((m) => m.chat_id === activeChatId)].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
+    [messages, pendingMessages, activeChatId]
+  );
 
   // Create Private Chat Thread Mutation
   const createChatMutation = useMutation({
@@ -335,6 +345,9 @@ export default function SingleWorkspaceDashboardPage() {
         targetChatId = "default";
       }
     }
+    // Backfill now that the real target chat is known, so the pending
+    // bubble stays correctly scoped to that chat (not orphaned as "pending").
+    setPendingMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, chat_id: targetChatId! } : m)));
 
     try {
       await api.post(`/projects/${workspaceId}/chats/${targetChatId}/ask`, {

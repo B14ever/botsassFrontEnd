@@ -5,10 +5,9 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import ThemeToggle from "@/components/shared/ThemeToggle";
+import AuthLayout from "@/components/auth/AuthLayout";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -45,20 +44,7 @@ function LoginForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="w-full max-w-md space-y-6 bg-card border border-border rounded-xl p-8 md:p-10 relative z-10"
-    >
-      <div className="text-center space-y-3">
-        <div className="flex justify-center mb-2">
-          <img src="/redas_logo.png" className="h-16 object-contain" alt="Redas Logo" />
-        </div>
-        <h1 className="text-3xl font-bold font-outfit tracking-tight text-foreground">Welcome back</h1>
-        <p className="text-muted-foreground font-medium text-sm">Sign in to your workspace</p>
-      </div>
-
+    <>
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -146,20 +132,16 @@ function LoginForm() {
           </Link>
         </p>
       </div>
-    </motion.div>
+    </>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
-      <div className="absolute top-6 right-6 z-20">
-        <ThemeToggle />
-      </div>
-      <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary" />}>
+    <AuthLayout title="Welcome back" subtitle="Sign in to your workspace">
+      <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />}>
         <LoginForm />
       </Suspense>
-    </div>
+    </AuthLayout>
   );
 }
-

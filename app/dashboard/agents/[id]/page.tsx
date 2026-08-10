@@ -767,7 +767,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           {pdfFile ? (
                             <>
                               <FileText className="w-8 h-8 text-primary mb-2" />
-                              <p className="text-xs font-medium text-foreground truncate max-w-[250px]">{pdfFile.name}</p>
+                              <p className="text-xs font-medium text-foreground truncate">{pdfFile.name}</p>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 

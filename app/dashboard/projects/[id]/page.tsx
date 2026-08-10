@@ -351,13 +351,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     createChatMutation.mutate(title || `Chat Thread #${chats.length + 1}`);
   };
 
-  const handleSend = async (e: React.FormEvent, retryText?: string) => {
-    e.preventDefault();
-    const userPrompt = (retryText ?? inputMessage).trim();
+  const sendMessage = async (userPrompt: string) => {
     if (!userPrompt || !activeChatId || isSending) return;
 
     const chatId = activeChatId;
-    if (!retryText) setInputMessage("");
     setIsSending(true);
 
     // Append user message immediately
@@ -436,7 +433,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   _failed: true,
                   _retry: () => {
                     setMessages((p) => p.filter((x) => x.id !== tempUserId));
-                    void handleSend({ preventDefault: () => {} } as React.FormEvent, userPrompt);
+                    void sendMessage(userPrompt);
                   },
                 }
               : m
@@ -445,6 +442,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    const userPrompt = inputMessage.trim();
+    if (!userPrompt) return;
+    setInputMessage("");
+    void sendMessage(userPrompt);
   };
 
   const handleIngestSubmit = async (e: React.FormEvent) => {
@@ -511,7 +516,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
 
           {/* Chat Threads */}
-          <div className="bg-card border border-border p-5 rounded-lg flex-1 flex flex-col min-h-[200px]">
+          <div className="bg-card border border-border p-5 rounded-lg flex-1 flex flex-col">
             <div className="flex items-center justify-between gap-3 mb-4">
               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground font-outfit">Chats ({chats.length})</span>
               <Button
@@ -563,7 +568,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
 
           {/* Agent Knowledge Base (Learnings) */}
-          <div className="bg-card border border-border p-5 rounded-lg flex flex-col min-h-[220px] max-h-[300px]">
+          <div className="bg-card border border-border p-5 rounded-lg flex flex-col min-h-55 max-h-75">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-1.5">
                 <Brain className="w-4 h-4 text-primary animate-pulse" />
@@ -614,7 +619,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Main Work / Chat Panel */}
-        <div className="flex-1 bg-card border border-border rounded-lg flex flex-col overflow-hidden min-h-[450px] xl:min-h-0 relative">
+        <div className="flex-1 bg-card border border-border rounded-lg flex flex-col overflow-hidden min-h- xl:min-h-0 relative">
           {activeChatId ? (
             <>
               {/* Chat Header */}
@@ -917,7 +922,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 <form onSubmit={handleIngestSubmit} className="space-y-3">
                   {uploadType === 'pdf' ? (
                     <div className="space-y-2">
-                      <div className="border border-dashed border-border hover:border-border/80 transition-all rounded-xl p-4 flex flex-col items-center justify-center bg-transparent relative min-h-[110px]">
+                      <div className="border border-dashed border-border hover:border-border/80 transition-all rounded-xl p-4 flex flex-col items-center justify-center bg-transparent relative min-h-27.5">
                         <FileText className="w-8 h-8 text-muted-foreground/50 mb-1" />
                         {pdfFile ? (
                           <span className="text-[10px] text-foreground truncate max-w-full font-medium">{pdfFile.name}</span>

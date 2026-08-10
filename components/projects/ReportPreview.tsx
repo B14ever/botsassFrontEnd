@@ -12,19 +12,17 @@ export default function ReportPreview({ content }: { content: ReportContent }) {
     );
   }
 
+  // A centered "document page" with real typography, mirroring
+  // the layout of the generated .docx (title + heading + body per section).
   return (
-    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-lg border border-border bg-secondary/40 p-3 space-y-2.5">
-      {content.title && (
-        <p className="text-foreground text-[12px] font-black">{content.title}</p>
-      )}
+    <div className="max-w-2xl mx-auto bg-background border border-border rounded-xl shadow-lg px-8 md:px-14 py-10 md:py-14 space-y-8">
+      <h1 className="text-foreground text-2xl md:text-3xl font-black font-outfit text-center leading-tight border-b border-border pb-6">
+        {content.title || "Untitled Report"}
+      </h1>
       {sections.map((sec, i) => (
-        <div key={i}>
-          <p className="text-primary text-[10px] font-bold uppercase tracking-wide mb-0.5">
-            {sec.heading}
-          </p>
-          <p className="text-muted-foreground text-[10.5px] leading-relaxed line-clamp-4">
-            {sec.text}
-          </p>
+        <div key={i} className="space-y-2">
+          <h2 className="text-primary text-sm md:text-base font-black font-outfit">{sec.heading}</h2>
+          <p className="text-foreground/90 text-sm leading-[1.8] whitespace-pre-line">{sec.text}</p>
         </div>
       ))}
     </div>
