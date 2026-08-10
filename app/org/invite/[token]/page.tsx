@@ -256,7 +256,7 @@ export default function InviteAcceptPage({ params }: { params: Promise<{ token: 
                     <Button
                       type="submit"
                       disabled={authLoading || acceptMutation.isPending}
-                      className="w-full h-11 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-white transition-all"
+                      className="w-full h-11 text-base font-semibold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
                     >
                       {authLoading || acceptMutation.isPending ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Creating account...</>

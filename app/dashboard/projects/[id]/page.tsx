@@ -986,7 +986,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               </div>
 
               {/* Right Column: Current sources */}
-              <div className="space-y-4 flex flex-col min-h-[200px] max-h-[280px]">
+              <div className="space-y-4 flex flex-col min-h-50 max-h-70">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/80 font-outfit">Current Sources ({sources.length})</span>
                 <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
                   {sources.length > 0 ? (

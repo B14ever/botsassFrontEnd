@@ -27,6 +27,14 @@ const fadeInUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
 } as const;
 
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+} as const;
+
+const cardHover =
+  "transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-foreground/5 hover:border-foreground/25";
+
 function FadeIn({
   children,
   className,
@@ -47,6 +55,40 @@ function FadeIn({
     >
       {children}
     </motion.div>
+  );
+}
+
+// Wraps a card grid so children (given `variants={fadeInUp}`) cascade in
+// one after another on scroll, instead of all fading in at once.
+function StaggerGrid({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-80px" }}
+      variants={staggerContainer}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Subtle monochrome dot-grid backdrop, faded via a radial mask — adds
+// depth behind the hero without introducing any new color.
+function DotGridBackdrop() {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 -z-10 pointer-events-none opacity-60 dark:opacity-40"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, color-mix(in srgb, var(--foreground) 18%, transparent) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+        maskImage: "radial-gradient(ellipse 70% 55% at 50% 0%, black, transparent 75%)",
+        WebkitMaskImage: "radial-gradient(ellipse 70% 55% at 50% 0%, black, transparent 75%)",
+      }}
+    />
   );
 }
 
@@ -136,63 +178,80 @@ export default function Home() {
       </header>
 
       <main className="relative pt-24">
-        <section className="px-6 py-16 md:py-24 flex flex-col items-center text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-1 text-[10px] font-semibold text-muted-foreground mb-8 uppercase tracking-wider">
-            <Sparkles className="w-3 h-3" />
-            <span>Built for Ethiopian businesses</span>
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">
-            Your business knowledge,
-            <br />
-            <span className="text-muted-foreground">answering customers everywhere.</span>
-          </h1>
-
-          <p className="mt-6 max-w-xl text-sm md:text-base text-muted-foreground font-medium leading-relaxed">
-            Redas turns your documents into an AI agent that responds on your website,
-            WhatsApp, and Telegram — and helps your team turn the same knowledge into
-            reports and presentations. Billed in Birr, no international card required.
-          </p>
-
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 items-center">
-            <Button
-              size="lg"
-              className="h-11 px-6 rounded-md font-semibold text-sm group"
-              asChild
+        <section className="relative px-6 py-16 md:py-24 flex flex-col items-center text-center max-w-4xl mx-auto overflow-hidden">
+          <DotGridBackdrop />
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={staggerContainer}
+            className="flex flex-col items-center"
+          >
+            <motion.div
+              variants={fadeInUp}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3.5 py-1 text-[10px] font-semibold text-muted-foreground mb-8 uppercase tracking-wider"
             >
-              <Link href={userName ? "/dashboard" : "/register"} className="flex items-center gap-2">
-                {userName ? "Go to Dashboard" : "Create My Workspace"}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-11 px-6 rounded-md font-semibold text-sm border-border text-foreground hover:bg-secondary/40"
-              asChild
-            >
-              <a href="#how-it-works">See how it works</a>
-            </Button>
-          </div>
+              <Sparkles className="w-3 h-3" />
+              <span>Built for Ethiopian businesses</span>
+            </motion.div>
 
-          <div className="mt-12 flex flex-wrap justify-center gap-6 opacity-60">
-            {["Website, WhatsApp & Telegram", "Trained on your documents", "Team workspaces", "Billed in Birr"].map(
-              (feat) => (
-                <div
-                  key={feat}
-                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />
-                  {feat}
-                </div>
-              )
-            )}
-          </div>
+            <motion.h1
+              variants={fadeInUp}
+              className="text-3xl md:text-5xl font-bold tracking-tight leading-tight text-foreground"
+            >
+              Your business knowledge,
+              <br />
+              <span className="text-muted-foreground">answering customers everywhere.</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeInUp}
+              className="mt-6 max-w-xl text-sm md:text-base text-muted-foreground font-medium leading-relaxed"
+            >
+              Redas turns your documents into an AI agent that responds on your website,
+              WhatsApp, and Telegram — and helps your team turn the same knowledge into
+              reports and presentations. Billed in Birr, no international card required.
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="mt-8 flex flex-col sm:flex-row gap-3 items-center">
+              <Button
+                size="lg"
+                className="h-11 px-6 rounded-md font-semibold text-sm group"
+                asChild
+              >
+                <Link href={userName ? "/dashboard" : "/register"} className="flex items-center gap-2">
+                  {userName ? "Go to Dashboard" : "Create My Workspace"}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-11 px-6 rounded-md font-semibold text-sm border-border text-foreground hover:bg-secondary/40"
+                asChild
+              >
+                <a href="#how-it-works">See how it works</a>
+              </Button>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="mt-12 flex flex-wrap justify-center gap-6 opacity-60">
+              {["Website, WhatsApp & Telegram", "Trained on your documents", "Team workspaces", "Billed in Birr"].map(
+                (feat) => (
+                  <div
+                    key={feat}
+                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />
+                    {feat}
+                  </div>
+                )
+              )}
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* Demo mockup - plain layout */}
         <FadeIn className="px-6 py-12 relative max-w-5xl mx-auto" id="demo">
-          <div className="p-1 rounded-lg border border-border bg-card overflow-hidden">
+          <div className={`p-1 rounded-lg border border-border bg-card overflow-hidden ${cardHover}`}>
             <div className="w-full bg-background rounded-md border border-border overflow-hidden flex relative">
               <div className="w-16 border-r border-border p-3 flex flex-col items-center gap-5 bg-card">
                 <div className="w-8 h-8 rounded-lg bg-secondary border border-border flex items-center justify-center">
@@ -214,7 +273,11 @@ export default function Home() {
                     <p className="text-[10px] text-muted-foreground">Workspace: Awash Textiles</p>
                   </div>
                   <div className="flex gap-2">
-                    <div className="px-2.5 py-0.5 rounded-full border border-border text-[9px] font-semibold text-muted-foreground">
+                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-border text-[9px] font-semibold text-muted-foreground">
+                      <span className="relative flex w-1.5 h-1.5">
+                        <span className="absolute inline-flex w-full h-full rounded-full bg-foreground/40 animate-ping" />
+                        <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-foreground" />
+                      </span>
                       Online
                     </div>
                   </div>
@@ -265,7 +328,7 @@ export default function Home() {
             </h3>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
                 title: "Upload what you already have",
@@ -280,15 +343,19 @@ export default function Home() {
                 desc: "Ask the same agent to draft reports, decks, and spreadsheets from your own data.",
               },
             ].map((step, i) => (
-              <FadeIn key={i} className="p-5 rounded-lg border border-border bg-card space-y-3">
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                className={`p-5 rounded-lg border border-border bg-card space-y-3 ${cardHover}`}
+              >
                 <div className="w-7 h-7 rounded-full bg-secondary border border-border flex items-center justify-center text-[11px] font-bold text-foreground">
                   {i + 1}
                 </div>
                 <h4 className="text-sm font-bold text-foreground">{step.title}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-              </FadeIn>
+              </motion.div>
             ))}
-          </div>
+          </StaggerGrid>
         </section>
 
         <section id="channels" className="px-6 py-12 max-w-5xl mx-auto border-t border-border">
@@ -301,7 +368,7 @@ export default function Home() {
             </h3>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               {
                 icon: Globe,
@@ -324,15 +391,19 @@ export default function Home() {
                 desc: "Ask your agent to turn your own knowledge into a report, a slide deck, or a spreadsheet — grounded in your documents.",
               },
             ].map((feat, i) => (
-              <FadeIn key={i} className="p-5 rounded-lg border border-border bg-card space-y-3">
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                className={`p-5 rounded-lg border border-border bg-card space-y-3 ${cardHover}`}
+              >
                 <div className="w-9 h-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-foreground">
                   <feat.icon className="w-4 h-4" />
                 </div>
                 <h4 className="text-sm font-bold text-foreground">{feat.title}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">{feat.desc}</p>
-              </FadeIn>
+              </motion.div>
             ))}
-          </div>
+          </StaggerGrid>
         </section>
 
         <section id="pricing" className="px-6 py-12 max-w-5xl mx-auto border-t border-border">
@@ -348,7 +419,7 @@ export default function Home() {
             </p>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {orderedPlans.length ? (
               orderedPlans.map((plan) => {
                 const isHighlighted = plan.code === "standard";
@@ -361,9 +432,10 @@ export default function Home() {
                   `${plan.limits.projects} team project${plan.limits.projects === 1 ? "" : "s"}`,
                 ];
                 return (
-                  <FadeIn
+                  <motion.div
                     key={plan.code}
-                    className={`p-6 rounded-lg border bg-card flex flex-col justify-between ${
+                    variants={fadeInUp}
+                    className={`p-6 rounded-lg border bg-card flex flex-col justify-between ${cardHover} ${
                       isHighlighted ? "border-primary" : "border-border"
                     }`}
                   >
@@ -394,7 +466,7 @@ export default function Home() {
                         {plan.code === "free" ? "Start Free" : "Get Started"}
                       </Button>
                     </Link>
-                  </FadeIn>
+                  </motion.div>
                 );
               })
             ) : (
@@ -402,7 +474,7 @@ export default function Home() {
                 Pricing is loading. Please refresh if it does not appear.
               </div>
             )}
-          </div>
+          </StaggerGrid>
         </section>
 
         <section id="security" className="px-6 py-12 max-w-5xl mx-auto border-t border-border">
@@ -415,7 +487,7 @@ export default function Home() {
             </h3>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
                 icon: Shield,
@@ -433,15 +505,19 @@ export default function Home() {
                 desc: "Every source change and team action is logged, so you always know who did what.",
               },
             ].map((item, i) => (
-              <FadeIn key={i} className="p-5 rounded-lg border border-border bg-card space-y-3">
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+                className={`p-5 rounded-lg border border-border bg-card space-y-3 ${cardHover}`}
+              >
                 <div className="w-9 h-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-foreground">
                   <item.icon className="w-4 h-4" />
                 </div>
                 <h4 className="text-sm font-bold text-foreground">{item.title}</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-              </FadeIn>
+              </motion.div>
             ))}
-          </div>
+          </StaggerGrid>
         </section>
 
         <FadeIn className="px-6 py-16 text-center max-w-xl mx-auto border-t border-border">
