@@ -141,6 +141,17 @@ export const fetchChatJobs = async (projectId: string, chatId: string): Promise<
 };
 
 /**
+ * Re-runs a job as a fresh one and repoints the existing chat message to it
+ * server-side — unlike executeProjectTool, this does NOT create a new chat
+ * turn, so retrying a failed artifact updates it in place instead of
+ * appending a duplicate user/assistant message pair.
+ */
+export const regenerateJob = async (projectId: string, jobId: string): Promise<ToolJob> => {
+  const response = await api.post<ToolJob>(`/projects/${projectId}/tools/jobs/${jobId}/regenerate`);
+  return response.data;
+};
+
+/**
  * Opens the job-status SSE stream and calls onUpdate for every emitted job
  * snapshot, resolving with the final one once the stream closes. Uses a raw
  * fetch + ReadableStream reader (not EventSource) so the bearer token this

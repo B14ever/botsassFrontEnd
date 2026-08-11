@@ -44,6 +44,7 @@ import {
   executeProjectTool,
   fetchChatJobs,
   streamJobStatus,
+  regenerateJob,
   Project,
   ProjectChat,
   ProjectMessage,
@@ -213,7 +214,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     if (regeneratingJobId) return;
     setRegeneratingJobId(job.id);
     try {
-      await runTool(job.tool_type as ToolTypeOption, job.user_prompt || "Regenerate this artifact.");
+      const newJob = await regenerateJob(projectId, job.id);
+      // Repoint the existing message to the new job instead of appending a
+      // new chat turn — regenerating isn't a new question.
+      setMessages((prev) =>
+        prev.map((m) => (m.generation_job_id === job.id ? { ...m, generation_job_id: newJob.id } : m))
+      );
+      setJobsById((prev) => ({ ...prev, [newJob.id]: newJob }));
+      startJobStream(newJob.id);
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
     } finally {
