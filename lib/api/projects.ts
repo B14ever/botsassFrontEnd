@@ -50,6 +50,7 @@ export type ToolJob = {
   content_json?: any;
   output_file_url?: string;
   error?: string;
+  previous_job_id?: string;
   created_at: string;
 };
 
@@ -148,6 +149,18 @@ export const fetchChatJobs = async (projectId: string, chatId: string): Promise<
  */
 export const regenerateJob = async (projectId: string, jobId: string): Promise<ToolJob> => {
   const response = await api.post<ToolJob>(`/projects/${projectId}/tools/jobs/${jobId}/regenerate`);
+  return response.data;
+};
+
+/**
+ * Revises an existing completed artifact according to a natural-language
+ * instruction, seeding the AI with the previous version instead of
+ * regenerating from scratch. Same in-place repoint behavior as
+ * regenerateJob — no duplicate chat turn. Only slides/report/spreadsheet
+ * jobs are editable today (enforced server-side).
+ */
+export const editJob = async (projectId: string, jobId: string, instruction: string): Promise<ToolJob> => {
+  const response = await api.post<ToolJob>(`/projects/${projectId}/tools/jobs/${jobId}/edit`, { instruction });
   return response.data;
 };
 

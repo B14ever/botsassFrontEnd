@@ -11,8 +11,11 @@ import {
   RotateCcw,
   AlertCircle,
   Eye,
+  Pencil,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { ToolJob } from "@/lib/api/projects";
 import SlidesPreview from "./SlidesPreview";
@@ -27,9 +30,14 @@ const TOOL_META: Record<string, { label: string; icon: typeof Presentation; ext:
   generate_image: { label: "Image", icon: ImageIcon, ext: "PNG" },
 };
 
+// Images aren't editable yet — the image model's edit/image-to-image support
+// isn't confirmed, and the backend enforces the same restriction.
+const EDITABLE_TOOL_TYPES = new Set(["create_presentation", "write_report", "analyze_data"]);
+
 const STAGE_LABELS: Record<string, string> = {
   queued: "Queued…",
   fetching_sources: "Reading knowledge base…",
+  loading_previous: "Loading previous version…",
   drafting: "Drafting content…",
   rendering: "Rendering file…",
   uploading: "Uploading…",
@@ -60,18 +68,32 @@ export default function ArtifactCard({
   job,
   onRegenerate,
   isRegenerating,
+  onEdit,
+  isEditing,
 }: {
   job: ToolJob;
   onRegenerate?: () => void;
   isRegenerating?: boolean;
+  onEdit?: (instruction: string) => void;
+  isEditing?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showEditInput, setShowEditInput] = useState(false);
+  const [editInstruction, setEditInstruction] = useState("");
   const meta = TOOL_META[job.tool_type] || { label: job.tool_type, icon: FileText, ext: "FILE" };
   const Icon = meta.icon;
   const isPending = job.status === "pending" || job.status === "processing";
   const isCompleted = job.status === "completed";
   const isFailed = job.status === "failed";
   const canExpand = isCompleted && !!job.content_json;
+  const canEdit = isCompleted && !!onEdit && EDITABLE_TOOL_TYPES.has(job.tool_type);
+
+  const submitEdit = () => {
+    if (!editInstruction.trim() || !onEdit) return;
+    onEdit(editInstruction.trim());
+    setEditInstruction("");
+    setShowEditInput(false);
+  };
 
   // Open automatically the moment a job finishes generating (not for
   // artifacts that were already complete when this card first mounted, e.g.
@@ -193,10 +215,54 @@ export default function ArtifactCard({
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 mr-8">
+              {canEdit && !isPending && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowEditInput((v) => !v)}
+                  disabled={isEditing}
+                  className="h-7 px-2.5 text-[10px] font-bold rounded-lg border-border gap-1"
+                >
+                  {isEditing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Pencil className="w-3 h-3" />}
+                  Edit
+                </Button>
+              )}
               {downloadButton}
               {regenerateButton}
             </div>
           </div>
+
+          {showEditInput && (
+            <div className="px-5 py-3 border-b border-border bg-secondary/40 flex items-center gap-2 shrink-0">
+              <Input
+                autoFocus
+                placeholder="e.g. Make slide 3 shorter, or add a row for Q4 revenue"
+                value={editInstruction}
+                onChange={(e) => setEditInstruction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitEdit();
+                  if (e.key === "Escape") setShowEditInput(false);
+                }}
+                className="flex-1 bg-background border-border text-foreground rounded-lg text-xs h-9"
+              />
+              <Button
+                type="button"
+                onClick={submitEdit}
+                disabled={!editInstruction.trim()}
+                className="h-9 px-4 text-xs font-bold rounded-lg"
+              >
+                Apply
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowEditInput(false)}
+                className="h-9 w-9 p-0 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 bg-secondary/20">
             <ArtifactBody job={job} />

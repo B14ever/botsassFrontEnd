@@ -45,6 +45,7 @@ import {
   fetchChatJobs,
   streamJobStatus,
   regenerateJob,
+  editJob,
   Project,
   ProjectChat,
   ProjectMessage,
@@ -97,6 +98,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
   const [jobsById, setJobsById] = useState<Record<string, ToolJob>>({});
   const [regeneratingJobId, setRegeneratingJobId] = useState<string | null>(null);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
   // Opens the SSE job-status stream and keeps jobsById in sync as it updates,
   // replacing the old 2s client polling loop.
@@ -210,22 +212,40 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     }
   };
 
+  // Shared by regenerate and edit — repoints the existing chat message to
+  // the new job instead of appending a new turn, since neither is a new
+  // question, then starts streaming its progress.
+  const applyNewJob = (oldJobId: string, newJob: ToolJob) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.generation_job_id === oldJobId ? { ...m, generation_job_id: newJob.id } : m))
+    );
+    setJobsById((prev) => ({ ...prev, [newJob.id]: newJob }));
+    startJobStream(newJob.id);
+  };
+
   const handleRegenerate = async (job: ToolJob) => {
     if (regeneratingJobId) return;
     setRegeneratingJobId(job.id);
     try {
       const newJob = await regenerateJob(projectId, job.id);
-      // Repoint the existing message to the new job instead of appending a
-      // new chat turn — regenerating isn't a new question.
-      setMessages((prev) =>
-        prev.map((m) => (m.generation_job_id === job.id ? { ...m, generation_job_id: newJob.id } : m))
-      );
-      setJobsById((prev) => ({ ...prev, [newJob.id]: newJob }));
-      startJobStream(newJob.id);
+      applyNewJob(job.id, newJob);
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
     } finally {
       setRegeneratingJobId(null);
+    }
+  };
+
+  const handleEdit = async (job: ToolJob, instruction: string) => {
+    if (editingJobId) return;
+    setEditingJobId(job.id);
+    try {
+      const newJob = await editJob(projectId, job.id, instruction);
+      applyNewJob(job.id, newJob);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to apply edit");
+    } finally {
+      setEditingJobId(null);
     }
   };
 
@@ -656,6 +676,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           job={job}
                           onRegenerate={() => handleRegenerate(job)}
                           isRegenerating={regeneratingJobId === job.id}
+                          onEdit={(instruction) => handleEdit(job, instruction)}
+                          isEditing={editingJobId === job.id}
                         />
                       ) : isFailed ? (
                         <button

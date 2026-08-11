@@ -40,7 +40,7 @@ import {
 import {
   fetchProjectSources, ingestProjectUrl, ingestProjectPdf,
   fetchProjectChats, createProjectChat, fetchProjectChatHistory,
-  executeProjectTool, fetchChatJobs, streamJobStatus, regenerateJob,
+  executeProjectTool, fetchChatJobs, streamJobStatus, regenerateJob, editJob,
   type KnowledgeSource, type ProjectChat, type ProjectMessage, type ToolJob
 } from "@/lib/api/projects";
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
@@ -151,6 +151,7 @@ export default function SingleWorkspaceDashboardPage() {
   };
   const [jobsById, setJobsById] = useState<Record<string, ToolJob>>({});
   const [regeneratingJobId, setRegeneratingJobId] = useState<string | null>(null);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [promptForTool, setPromptForTool] = useState<{ type: ToolTypeOption } | null>(null);
   const [customToolPrompt, setCustomToolPrompt] = useState("");
   const [isGeneratingTool, setIsGeneratingTool] = useState(false);
@@ -505,23 +506,41 @@ export default function SingleWorkspaceDashboardPage() {
     }
   };
 
+  // Shared by regenerate and edit — repoints the existing chat message to
+  // the new job instead of appending a new turn, since neither is a new
+  // question, then starts streaming its progress.
+  const applyNewJob = (oldJobId: string, newJob: ToolJob) => {
+    queryClient.setQueryData<ProjectMessage[]>(
+      ["workspace-messages", workspaceId, newJob.chat_id],
+      (old = []) => old.map((m) => (m.generation_job_id === oldJobId ? { ...m, generation_job_id: newJob.id } : m))
+    );
+    setJobsById((prev) => ({ ...prev, [newJob.id]: newJob }));
+    startJobStream(newJob.id);
+  };
+
   const handleRegenerate = async (job: ToolJob) => {
     if (regeneratingJobId) return;
     setRegeneratingJobId(job.id);
     try {
       const newJob = await regenerateJob(workspaceId!, job.id);
-      // Repoint the existing message to the new job instead of appending a
-      // new chat turn — regenerating isn't a new question.
-      queryClient.setQueryData<ProjectMessage[]>(
-        ["workspace-messages", workspaceId, newJob.chat_id],
-        (old = []) => old.map((m) => (m.generation_job_id === job.id ? { ...m, generation_job_id: newJob.id } : m))
-      );
-      setJobsById((prev) => ({ ...prev, [newJob.id]: newJob }));
-      startJobStream(newJob.id);
+      applyNewJob(job.id, newJob);
     } catch (err: any) {
       toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
     } finally {
       setRegeneratingJobId(null);
+    }
+  };
+
+  const handleEdit = async (job: ToolJob, instruction: string) => {
+    if (editingJobId) return;
+    setEditingJobId(job.id);
+    try {
+      const newJob = await editJob(workspaceId!, job.id, instruction);
+      applyNewJob(job.id, newJob);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.message || "Failed to apply edit");
+    } finally {
+      setEditingJobId(null);
     }
   };
 
@@ -852,6 +871,8 @@ export default function SingleWorkspaceDashboardPage() {
                           job={job}
                           onRegenerate={() => handleRegenerate(job)}
                           isRegenerating={regeneratingJobId === job.id}
+                          onEdit={(instruction) => handleEdit(job, instruction)}
+                          isEditing={editingJobId === job.id}
                         />
                       ) : isFailed ? (
                         <button
