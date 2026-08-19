@@ -48,7 +48,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="Create your AI agent workspace">
+    <AuthLayout title="Create your account" subtitle="Sign up for your Redas workspace">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground ml-1">Full Name</label>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
 

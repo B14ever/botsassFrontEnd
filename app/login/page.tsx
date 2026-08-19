@@ -106,7 +106,7 @@ function LoginForm() {
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border"></span></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
         </div>
       </div>
 
@@ -138,7 +138,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your workspace">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your Redas workspace"
+    >
       <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />}>
         <LoginForm />
       </Suspense>

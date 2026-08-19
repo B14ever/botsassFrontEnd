@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/shared/Providers";
+import { PLATFORM_NAME, PLATFORM_TAGLINE, PLATFORM_DESCRIPTION } from "@/constants";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,11 +16,12 @@ const outfit = Outfit({
   display: "swap",
 });
 
-import { PLATFORM_NAME } from "@/constants";
-
 export const metadata: Metadata = {
-  title: `${PLATFORM_NAME} | Support Bots for Your Docs`,
-  description: "Turn docs and FAQs into fast, trusted support answers.",
+  title: `${PLATFORM_NAME} — ${PLATFORM_TAGLINE}`,
+  description: PLATFORM_DESCRIPTION,
+  icons: {
+    icon: "/redas_icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable} scroll-smooth`} suppressHydrationWarning>
-      <body className="font-sans antialiased" suppressHydrationWarning>
+      <body className="font-sans antialiased bg-background text-foreground" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
