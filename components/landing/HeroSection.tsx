@@ -180,8 +180,8 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                   />
                 </div>
 
-                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-secondary/80 text-foreground flex items-center justify-center font-bold text-[9px] sm:text-[10px] ml-1">
-                  JD
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-secondary/80 text-foreground flex items-center justify-center ml-1">
+                  <User className="w-3 h-3 text-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -288,7 +288,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <h2 className="text-sm sm:text-base font-bold tracking-tight text-foreground font-outfit">
-                            Welcome back, John Doe
+                            Welcome
                           </h2>
                           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 line-clamp-1 sm:line-clamp-none">
                             Overview of workspace usage analytics, interactive graphs, and active projects.
