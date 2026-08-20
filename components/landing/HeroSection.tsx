@@ -144,7 +144,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
           {/* Pure Seamless Glassmorphic Preview (Expanded Width) */}
           <motion.div
             variants={fadeInUp}
-            className="mt-8 w-full max-w-6xl min-h-[500px] sm:h-[580px] md:h-[620px] rounded-2xl bg-white/50 dark:bg-zinc-950/45 backdrop-blur-2xl backdrop-saturate-150 text-foreground overflow-hidden text-left flex flex-col relative z-30"
+            className="mt-8 w-full max-w-6xl min-h-125 sm:h-145 md:h-155 rounded-2xl bg-white/50 dark:bg-zinc-950/45 backdrop-blur-2xl backdrop-saturate-150 text-foreground overflow-hidden text-left flex flex-col relative z-30"
           >
             {/* Top Navigation Bar with Real Redas Logo & Slide Indicators */}
             <div className="h-11 px-3 sm:px-4 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl flex items-center justify-between text-xs shrink-0 select-none">
@@ -425,7 +425,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       {/* Exact Responsive BotCards Grid from BotCard Component */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-2.5">
                         {/* BotCard 1: Customer Support */}
-                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-[145px] sm:h-[155px]">
+                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-36.25 sm:h-38.75">
                           <div className="space-y-1 sm:space-y-1.5">
                             <div className="flex items-center justify-between">
                               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/80 flex items-center justify-center text-primary">
@@ -451,7 +451,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         </div>
 
                         {/* BotCard 2: Sales Assistant */}
-                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-[145px] sm:h-[155px]">
+                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-36.25 sm:h-38.75">
                           <div className="space-y-1 sm:space-y-1.5">
                             <div className="flex items-center justify-between">
                               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/80 flex items-center justify-center text-primary">
@@ -477,7 +477,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         </div>
 
                         {/* BotCard 3: DocGen Assistant */}
-                        <div className="hidden lg:flex bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-[145px] sm:h-[155px]">
+                        <div className="hidden lg:flex bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-lg flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-36.25 sm:h-38.75">
                           <div className="space-y-1 sm:space-y-1.5">
                             <div className="flex items-center justify-between">
                               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-secondary/80 flex items-center justify-center text-primary">
@@ -540,7 +540,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       {/* Exact Workspaces Cards Grid from /dashboard/workspaces */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {/* Workspace 1: Main Workspace */}
-                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-3 sm:p-3.5 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-[155px] sm:h-[165px]">
+                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-3 sm:p-3.5 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-38.75 sm:h-41.25">
                           <div className="space-y-1.5 sm:space-y-2">
                             <div className="flex items-center justify-between">
                               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-secondary/80 flex items-center justify-center text-primary">
@@ -578,7 +578,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         </div>
 
                         {/* Workspace 2: Support & Operations */}
-                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-3 sm:p-3.5 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-[155px] sm:h-[165px]">
+                        <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-3 sm:p-3.5 rounded-lg flex flex-col justify-between hover:bg-white/80 dark:hover:bg-zinc-900/80 transition-all h-38.75 sm:h-41.25">
                           <div className="space-y-1.5 sm:space-y-2">
                             <div className="flex items-center justify-between">
                               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-secondary/80 flex items-center justify-center text-primary">

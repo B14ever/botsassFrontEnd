@@ -86,14 +86,14 @@ export default function IntegrationsSection() {
           return (
             <div
               key={idx}
-              className="p-6 rounded-2xl bg-[#0c0e15]/80 border border-white/[0.08] hover:border-[#ff1a40]/40 hover:bg-[#111420] transition-all duration-300 backdrop-blur-xl group flex flex-col justify-between space-y-4"
+              className="p-6 rounded-2xl bg-[#0c0e15]/80 border border-white/8 hover:border-[#ff1a40]/40 hover:bg-[#111420] transition-all duration-300 backdrop-blur-xl group flex flex-col justify-between space-y-4"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${item.color}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wider bg-white/[0.04] px-2.5 py-1 rounded-md">
+                  <span className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wider bg-white/4 px-2.5 py-1 rounded-md">
                     {item.category}
                   </span>
                 </div>
@@ -108,7 +108,7 @@ export default function IntegrationsSection() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
+              <div className="pt-3 border-t border-white/6 flex items-center justify-between text-xs text-slate-400">
                 <span className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   Plug-and-Play
