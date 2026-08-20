@@ -48,7 +48,7 @@ export default function CtaSection({ userName }: { userName?: string | null }) {
       </div>
 
       {/* Main Closing Call to Action (Vertically Centered) */}
-      <div className="relative z-10 w-full px-6 pt-24 pb-12 flex flex-col items-center text-center max-w-4xl mx-auto my-auto">
+      <div className="relative z-10 w-full px-6 pt-2 pb-12 flex flex-col items-center text-center max-w-4xl mx-auto my-auto">
         <motion.div
           initial="hidden"
           whileInView="show"
@@ -56,14 +56,6 @@ export default function CtaSection({ userName }: { userName?: string | null }) {
           variants={staggerContainer}
           className="space-y-5 max-w-2xl mx-auto flex flex-col items-center"
         >
-          <motion.div
-            variants={fadeInUp}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/80 backdrop-blur-sm px-3.5 py-1 text-[11px] font-semibold text-muted-foreground"
-          >
-            <Sparkles className="w-3 h-3 text-foreground" />
-            <span>Get Started in 5 Minutes</span>
-          </motion.div>
-
           <motion.h2
             variants={fadeInUp}
             className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.15]"

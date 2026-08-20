@@ -25,7 +25,7 @@ export interface Navbar12Props {
 export default function Navbar12({
   logo,
   brandName = "Redas",
-  badge = "AI Agents for Business",
+  badge,
   navItems = [
     { label: "How It Works", href: "#how-it-works" },
     { label: "Channels", href: "#channels" },

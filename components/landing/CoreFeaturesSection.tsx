@@ -52,7 +52,7 @@ export default function CoreFeaturesSection() {
   return (
     <section
       id="features"
-      className="w-full min-h-screen flex flex-col justify-center items-center px-6 py-10 md:py-12 border-t border-border"
+      className="w-full flex flex-col justify-center items-center px-6 py-16 md:py-24 border-t border-border/25 relative z-10"
     >
       <div className="w-full max-w-5xl mx-auto my-auto">
         <motion.div

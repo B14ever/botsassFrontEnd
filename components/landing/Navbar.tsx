@@ -102,7 +102,6 @@ export default function Navbar() {
   return (
     <Navbar12
       brandName="Redas"
-      badge="Active Intelligence"
       navItems={navLinks}
       actions={desktopActions}
       mobileActions={mobileActions}

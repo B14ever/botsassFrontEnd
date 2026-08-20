@@ -26,7 +26,7 @@ export default function Home() {
 
       {/* Main Content Sections */}
       <main className="relative">
-        {/* 1. Hero Section (with DarkVeil Background) */}
+        {/* 1. Hero Section (with DarkVeil Background & Embedded Dashboard Preview) */}
         <HeroSection userName={userName} />
 
         {/* 2. Core Features (4 Natural, Simple Cards) */}
