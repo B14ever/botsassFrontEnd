@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion, type Variants } from "framer-motion";
-import { Headphones, TrendingUp, Layers, Building2 } from "lucide-react";
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 16 },
@@ -17,82 +16,68 @@ const staggerContainer: Variants = {
 export default function UseCasesSection() {
   const useCases = [
     {
-      icon: Headphones,
-      title: "Customer Support Teams",
-      desc: "Deflect repetitive tickets with a multilingual agent trained on your help docs, providing 24/7 resolution across Web, Telegram, and WhatsApp.",
-      tag: "Support & Deflection",
+      title: "Customer Support",
+      desc: "Answer questions instantly and reduce repetitive support work.",
     },
     {
-      icon: TrendingUp,
-      title: "Sales & Client Success",
-      desc: "Auto-generate client-ready decks, executive summaries, and performance reports directly from your internal workspace knowledge.",
-      tag: "Sales Enablement",
+      title: "Sales",
+      desc: "Qualify leads and answer product questions around the clock.",
     },
     {
-      icon: Layers,
-      title: "Operations & Internal Teams",
-      desc: "Turn internal drives, wikis, and SOPs into a searchable, conversational assistant so teammates find accurate answers in seconds.",
-      tag: "Internal Knowledge",
+      title: "Internal Knowledge",
+      desc: "Give your team instant access to company knowledge.",
     },
     {
-      icon: Building2,
-      title: "Agencies & Consultancies",
-      desc: "Serve multiple client accounts with completely isolated, branded workspaces and custom-trained agents without data leakage.",
-      tag: "Multi-Tenant Workspaces",
+      title: "Operations",
+      desc: "Automate repetitive tasks and turn business processes into AI-powered workflows.",
     },
   ];
 
   return (
-    <section id="use-cases" className="px-6 py-20 max-w-5xl mx-auto border-t border-border">
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={fadeInUp}
-        className="mb-12 space-y-3 text-left"
-      >
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Use Cases
-        </span>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-          Built for teams that rely on accurate knowledge.
-        </h2>
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
-          Whether you&apos;re automating frontline support or generating client deliverables, Redas adapts to your workflow.
-        </p>
-      </motion.div>
+    <section
+      id="use-cases"
+      className="w-full flex flex-col justify-center items-center px-4 sm:px-6 py-20 md:py-28 border-t border-border/25 relative z-10"
+    >
+      <div className="w-full max-w-6xl mx-auto space-y-12">
+        {/* Section Heading */}
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={fadeInUp}
+          className="text-center max-w-2xl mx-auto"
+        >
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            How teams use Redas.
+          </h2>
+        </motion.div>
 
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={staggerContainer}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-5"
-      >
-        {useCases.map((uc, idx) => {
-          const Icon = uc.icon;
-          return (
+        {/* 4 Clean Typography Outcome Cards (No Icons, No Numbers) */}
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={staggerContainer}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          {useCases.map((item, idx) => (
             <motion.div
               key={idx}
               variants={fadeInUp}
-              className="p-6 rounded-xl border border-border/80 bg-card/60 dark:bg-card/40 backdrop-blur-sm space-y-4 hover:border-foreground/20 transition-all duration-200 flex flex-col justify-between"
+              whileHover={{ y: -3 }}
+              className="p-6 rounded-2xl bg-secondary/30 dark:bg-zinc-900/40 hover:bg-secondary/50 dark:hover:bg-zinc-900/60 transition-colors flex flex-col justify-start space-y-3 text-left h-full"
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-9 h-9 rounded-lg bg-secondary/80 border border-border flex items-center justify-center text-foreground">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-secondary/60 px-2.5 py-0.5 rounded-full border border-border/60">
-                    {uc.tag}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-foreground">{uc.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{uc.desc}</p>
-              </div>
+              <h3 className="text-xl font-bold text-foreground tracking-tight">
+                {item.title}
+              </h3>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {item.desc}
+              </p>
             </motion.div>
-          );
-        })}
-      </motion.div>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }

@@ -74,7 +74,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
         />
       </div>
 
-      <div className="relative z-10 w-full px-4 sm:px-6 pt-32 pb-16 sm:pb-20 md:pb-24 md:pt-36 flex flex-col items-center text-center max-w-7xl mx-auto space-y-8">
+      <div className="relative z-10 w-full px-4 sm:px-6 pt-32 pb-8 sm:pb-10 md:pb-12 md:pt-36 flex flex-col items-center text-center max-w-7xl mx-auto space-y-8">
         <motion.div
           initial="hidden"
           animate="show"

@@ -29,10 +29,10 @@ export default function Home() {
         {/* 1. Hero Section (with DarkVeil Background & Embedded Dashboard Preview) */}
         <HeroSection userName={userName} />
 
-        {/* 2. Core Features (4 Natural, Simple Cards) */}
+        {/* 2. What Redas Can Do */}
         <CoreFeaturesSection />
 
-        {/* 3. How It Works (3 Clear Steps) */}
+        {/* 3. How It Works & Use Cases (Unified Section) */}
         <HowItWorksSection />
 
         {/* 4. Pricing & Usage Tiers */}
