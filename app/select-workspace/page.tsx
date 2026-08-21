@@ -10,6 +10,7 @@ import { listWorkspaces, Workspace, createWorkspace } from "@/lib/api/workspace"
 import { useWorkspaceStore } from "@/store/workspaceStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spokes } from "@/components/loading-ui/spokes";
 import {
   Dialog,
   DialogContent,
@@ -78,8 +79,8 @@ export default function SelectWorkspacePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
+        <Spokes className="size-16" />
         <p className="text-sm text-muted-foreground font-medium">Loading your workspaces...</p>
       </div>
     );

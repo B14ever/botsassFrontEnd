@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PixelBlast from "@/components/ui/PixelBlast";
+import { useTranslations } from "next-intl";
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -202,33 +205,44 @@ function AutomateWorkflowsVector() {
 }
 
 export default function CoreFeaturesSection() {
+  const t = useTranslations("landing.core_features");
+  const tCommon = useTranslations("common");
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = !mounted || resolvedTheme === "dark";
+
   const features = [
     {
       id: "build-agents",
-      title: "Build agents",
-      desc: "Create specialized AI agents for customer support, sales, operations, and more.",
-      href: "/register",
+      title: t("f1_title"),
+      desc: t("f1_desc"),
+      href: "/signup",
       vector: <BuildAgentsVector />,
     },
     {
       id: "connect-knowledge",
-      title: "Connect knowledge",
-      desc: "Give your agents access to the information your business already has.",
-      href: "/register",
+      title: t("f2_title"),
+      desc: t("f2_desc"),
+      href: "/signup",
       vector: <ConnectKnowledgeVector />,
     },
     {
       id: "deploy-anywhere",
-      title: "Deploy anywhere",
-      desc: "Reach customers through WhatsApp, Telegram, and your website.",
-      href: "/register",
+      title: t("f3_title"),
+      desc: t("f3_desc"),
+      href: "/signup",
       vector: <DeployAnywhereVector />,
     },
     {
       id: "automate-workflows",
-      title: "Automate workflows",
-      desc: "Let agents take action, not just generate responses.",
-      href: "/register",
+      title: t("f4_title"),
+      desc: t("f4_desc"),
+      href: "/signup",
       vector: <AutomateWorkflowsVector />,
     },
   ];
@@ -236,9 +250,47 @@ export default function CoreFeaturesSection() {
   return (
     <section
       id="features"
-      className="w-full flex flex-col justify-center items-center px-4 sm:px-6 pt-10 pb-16 md:pt-14 md:pb-24 border-t border-border/25 relative z-10 overflow-hidden"
+      className="w-full flex flex-col justify-center items-center px-4 sm:px-6 pt-24 pb-20 md:pt-32 md:pb-32 relative z-10 overflow-hidden isolate"
     >
-      <div className="w-full max-w-6xl mx-auto space-y-12 md:space-y-20 relative">
+      {/* PixelBlast Full Section Animated Background */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-20 dark:opacity-40 overflow-hidden select-none z-0 [mask-image:linear-gradient(to_bottom,transparent_0%,black_20%,black_80%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_20%,black_80%,transparent_100%)]"
+      >
+        <PixelBlast
+          variant="circle"
+          pixelSize={5}
+          color={isDark ? "#8b5cf6" : "#7c3aed"}
+          patternScale={3}
+          patternDensity={1.2}
+          pixelSizeJitter={0.5}
+          enableRipples
+          rippleSpeed={0.4}
+          rippleThickness={0.12}
+          rippleIntensityScale={1.5}
+          liquid={false}
+          liquidStrength={0.12}
+          liquidRadius={1.2}
+          liquidWobbleSpeed={5}
+          speed={0.5}
+          edgeFade={0.25}
+          transparent
+        />
+      </div>
+
+      {/* Seamless Multi-Stop Top Gradient Bridge from Hero */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-48 sm:h-64 bg-gradient-to-b from-[#fafafa] dark:from-background via-[#fafafa]/85 dark:via-background/85 to-transparent z-10"
+      />
+
+      {/* Seamless Multi-Stop Bottom Gradient Bridge to How It Works / Use Cases */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-48 sm:h-64 bg-gradient-to-b from-transparent via-[#fafafa]/85 dark:via-background/85 to-[#fafafa] dark:to-background z-10"
+      />
+
+      <div className="w-full max-w-6xl mx-auto space-y-12 md:space-y-20 relative z-20">
         {/* Section Heading */}
         <motion.div
           initial="hidden"
@@ -248,7 +300,7 @@ export default function CoreFeaturesSection() {
           className="text-center max-w-2xl mx-auto space-y-3 relative z-10"
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            What Redas can do
+            {t("title")}
           </h2>
         </motion.div>
 
@@ -285,7 +337,7 @@ export default function CoreFeaturesSection() {
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
                     whileHover={{ scale: 1.015, y: -4 }}
-                    className={`w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[4/3] rounded-2xl md:rounded-3xl bg-secondary/30 dark:bg-zinc-900/50 border border-border/60 shadow-sm transition-shadow hover:shadow-md overflow-hidden flex items-center justify-center ${
+                    className={`w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[4/3] rounded-2xl md:rounded-3xl bg-white/90 dark:bg-zinc-900/60 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] dark:shadow-none overflow-hidden flex items-center justify-center transition-all ${
                       isEven ? "md:order-1" : "md:order-2"
                     }`}
                   >
@@ -318,7 +370,7 @@ export default function CoreFeaturesSection() {
                         className="rounded-full bg-foreground text-background hover:bg-foreground/90 font-medium text-xs sm:text-sm px-5 py-2 h-9 sm:h-10 inline-flex items-center gap-1.5 shadow-sm transition-all"
                       >
                         <Link href={feature.href} aria-label={`Learn more about ${feature.title}`}>
-                          <span>Learn More</span>
+                          <span>{tCommon("learn_more")}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </Button>

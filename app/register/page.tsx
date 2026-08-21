@@ -11,8 +11,10 @@ import { toast } from "sonner";
 import api from "@/lib/api";
 import { getAxiosErrorMessage } from "@/lib/api/errors";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { useTranslations } from "next-intl";
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +50,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="Sign up for your Redas workspace">
+    <AuthLayout title={t("signup_title")} subtitle={t("signup_subtitle")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground ml-1">Full Name</label>
@@ -65,12 +67,12 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground ml-1">Email Address</label>
+          <label className="text-sm font-medium text-muted-foreground ml-1">{t("email")}</label>
           <div className="relative group">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
             <Input
               type="email"
-              placeholder="name@example.com"
+              placeholder={t("email_placeholder")}
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-4 text-foreground placeholder:text-muted-foreground/50"
@@ -79,12 +81,12 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground ml-1">Password</label>
+          <label className="text-sm font-medium text-muted-foreground ml-1">{t("password")}</label>
           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
             <Input
               type={showPassword ? "text" : "password"}
-              placeholder="Create password"
+              placeholder={t("password_placeholder")}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-11 text-foreground placeholder:text-muted-foreground/50"
@@ -109,7 +111,7 @@ export default function RegisterPage() {
             <Loader2 className="animate-spin w-5 h-5" />
           ) : (
             <>
-              Create account <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              {t("sign_up")} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </>
           )}
         </Button>
@@ -118,7 +120,7 @@ export default function RegisterPage() {
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
         </div>
       </div>
 
@@ -134,14 +136,14 @@ export default function RegisterPage() {
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </svg>
-        Sign up with Google
+        {t("google_sign_in")}
       </Button>
 
       <div className="flex justify-center pt-2">
         <p className="text-muted-foreground text-sm">
-          Already have an account?{" "}
+          {t("have_account")}{" "}
           <Link href="/login" className="text-primary hover:underline font-semibold ml-1 transition-all">
-            Log in
+            {t("sign_in")}
           </Link>
         </p>
       </div>

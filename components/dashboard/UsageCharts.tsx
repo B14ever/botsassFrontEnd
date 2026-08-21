@@ -11,6 +11,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useTranslations } from "next-intl";
 
 interface UsageChartsProps {
   analytics: UsageAnalytics;
@@ -32,10 +33,13 @@ const barChartConfig = {
 } satisfies ChartConfig;
 
 export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
+  const tPreview = useTranslations("landing.hero.preview");
+  const tUsage = useTranslations("usage");
+  const tCommon = useTranslations("common");
+
   // Check if there is enough data (at least 1 message exists)
   const totalMessages = analytics.daily_counts.reduce((sum, item) => sum + item.count, 0);
   const hasEnoughData = totalMessages >= 1;
-
 
   // Format dates for display
   const formatDate = (dateStr: string) => {
@@ -54,7 +58,7 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
         <div className="bg-secondary border border-border p-4 rounded-lg flex flex-col justify-between">
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Messages this month
+              {tPreview("messages_this_month")}
             </span>
             {billingPeriodStr && (
               <p className="text-[9px] text-muted-foreground/60 mt-0.5">
@@ -73,10 +77,10 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
         <div className="bg-secondary border border-border p-4 rounded-lg flex flex-col justify-between">
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Connected Channels
+              {tPreview("connected_channels")}
             </span>
             <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-              Active Telegram and WhatsApp bots
+              {tPreview("channels_sub")}
             </p>
           </div>
           <span className="text-2xl font-bold text-foreground mt-2">
@@ -95,7 +99,7 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-sm font-bold flex items-center gap-1.5">
                 <LineIcon className="w-4 h-4 text-muted-foreground" />
-                Messages over the last 14 days
+                {tPreview("messages_chart_title")}
               </CardTitle>
             </CardHeader>
             <CardContent className="h-64 pt-4">
@@ -148,11 +152,11 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-foreground text-sm font-bold flex items-center gap-1.5">
                 <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                Credits used per agent
+                {tUsage("monthly_chats")}
               </CardTitle>
               {billingPeriodStr && (
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Current billing period: {billingPeriodStr}
+                  {tUsage("billing_period")}: {billingPeriodStr}
                 </p>
               )}
             </CardHeader>
@@ -197,7 +201,7 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
                 </ChartContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                  No active agents created yet.
+                  {tCommon("no_data")}
                 </div>
               )}
             </CardContent>
@@ -206,9 +210,9 @@ export default function UsageCharts({ analytics, usage }: UsageChartsProps) {
       ) : (
         <div className="py-12 flex flex-col items-center justify-center text-center border border-dashed border-border rounded-lg bg-muted/10">
           <Activity className="w-8 h-8 text-muted-foreground/30 mb-2.5" />
-          <h4 className="text-foreground font-bold text-xs">Analytics are gathering</h4>
+          <h4 className="text-foreground font-bold text-xs">{tUsage("daily_chart_title")}</h4>
           <p className="text-muted-foreground max-w-xs mx-auto mt-0.5 text-[11px]">
-            Send messages to your bots to build response latency records and daily counts.
+            {tUsage("daily_chart_desc")}
           </p>
         </div>
       )}

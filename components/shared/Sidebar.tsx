@@ -33,6 +33,8 @@ import { getWorkspaceUsage, listWorkspaces, WorkspaceUsage } from '@/lib/api/wor
 
 import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
 import { PLATFORM_NAME } from '@/constants';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,6 +42,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const { activeWorkspaceId, workspaces, setWorkspaces } = useWorkspaceStore();
   const router = useRouter();
+  const tNav = useTranslations('nav');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -104,13 +107,13 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   // If Invited Workspace Account -> ONLY show that Workspace & Workspace Settings (no unrelated global features)
   const navItems = isPersonalAccount
     ? [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
-        { name: 'Workspaces', href: '/dashboard/workspaces', icon: Building2, exact: false },
-        { name: 'Agents', href: '/dashboard/agents', icon: Bot, exact: false },
-        { name: 'Usage', href: '/dashboard/usage', icon: Activity, exact: false },
-        { name: 'Settings', href: '/dashboard/settings', icon: User, exact: false },
-        { name: 'Plans', href: '/dashboard/plans', icon: Sparkles, exact: false },
-        { name: 'Billing', href: '/dashboard/billing', icon: CreditCard, exact: false },
+        { name: tNav('dashboard'), href: '/dashboard', icon: LayoutDashboard, exact: true },
+        { name: tNav('workspaces'), href: '/dashboard/workspaces', icon: Building2, exact: false },
+        { name: tNav('bots'), href: '/dashboard/agents', icon: Bot, exact: false },
+        { name: tNav('usage'), href: '/dashboard/usage', icon: Activity, exact: false },
+        { name: tNav('settings'), href: '/dashboard/settings', icon: User, exact: false },
+        { name: tNav('pricing'), href: '/dashboard/plans', icon: Sparkles, exact: false },
+        { name: tNav('billing'), href: '/dashboard/billing', icon: CreditCard, exact: false },
       ]
     : [
         {
@@ -183,7 +186,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
-          <span className="font-medium text-xs text-muted-foreground">Theme</span>
+          <LanguageSwitcher showLabel />
           <ThemeToggle />
         </div>
       </div>
@@ -223,59 +226,64 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Profile Circle Dropdown */}
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="rounded-full h-8 w-8 p-0 border border-border flex items-center justify-center shrink-0 hover:bg-muted"
-          >
-            {session?.user?.image || user?.avatar_url ? (
-              <img src={session?.user?.image || user?.avatar_url} className="w-7 h-7 rounded-full" alt="avatar" />
-            ) : (
-              <div className="w-7 h-7 bg-secondary rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold text-foreground">
-                {session?.user?.name ? session.user.name.slice(0, 2).toUpperCase() : (user?.email ? user.email.slice(0, 2).toUpperCase() : 'US')}
-              </div>
-            )}
-          </Button>
+        {/* Right Header Actions */}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
 
-          <AnimatePresence>
-            {isProfileOpen && (
-              <>
-                {/* Backdrop to close click outside */}
-                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-card p-2 shadow-lg z-50"
-                >
-                  <div className="px-3 py-2 border-b border-border/50 mb-1">
-                    <p className="text-xs font-bold text-foreground truncate">{session?.user?.name || 'User'}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{session?.user?.email || user?.email}</p>
-                  </div>
-                  <Link href="/dashboard/settings" onClick={() => setIsProfileOpen(false)} className="w-full block">
-                    <Button
-                      variant="ghost"
-                      className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted transition-all rounded-md h-9 border-none bg-transparent"
-                    >
-                      <Settings className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold font-sans">General Settings</span>
-                    </Button>
-                  </Link>
-                  <Button
-                    onClick={handleLogout}
-                    variant="ghost"
-                    className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-red-500 hover:text-red-600 hover:bg-destructive/10 transition-all rounded-md h-9 border-none bg-transparent"
+          {/* Profile Circle Dropdown */}
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="rounded-full h-8 w-8 p-0 border border-border flex items-center justify-center shrink-0 hover:bg-muted"
+            >
+              {session?.user?.image || user?.avatar_url ? (
+                <img src={session?.user?.image || user?.avatar_url} className="w-7 h-7 rounded-full" alt="avatar" />
+              ) : (
+                <div className="w-7 h-7 bg-secondary rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold text-foreground">
+                  {session?.user?.name ? session.user.name.slice(0, 2).toUpperCase() : (user?.email ? user.email.slice(0, 2).toUpperCase() : 'US')}
+                </div>
+              )}
+            </Button>
+
+            <AnimatePresence>
+              {isProfileOpen && (
+                <>
+                  {/* Backdrop to close click outside */}
+                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-card p-2 shadow-lg z-50"
                   >
-                    <LogOut className="w-4 h-4 text-red-500" />
-                    <span className="font-semibold font-sans">Sign Out</span>
-                  </Button>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                    <div className="px-3 py-2 border-b border-border/50 mb-1">
+                      <p className="text-xs font-bold text-foreground truncate">{session?.user?.name || 'User'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{session?.user?.email || user?.email}</p>
+                    </div>
+                    <Link href="/dashboard/settings" onClick={() => setIsProfileOpen(false)} className="w-full block">
+                      <Button
+                        variant="ghost"
+                        className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-muted transition-all rounded-md h-9 border-none bg-transparent"
+                      >
+                        <Settings className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold font-sans">{tNav('settings')}</span>
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={handleLogout}
+                      variant="ghost"
+                      className="w-full flex items-center justify-start gap-2.5 px-3 py-2 text-xs text-red-500 hover:text-red-600 hover:bg-destructive/10 transition-all rounded-md h-9 border-none bg-transparent"
+                    >
+                      <LogOut className="w-4 h-4 text-red-500" />
+                      <span className="font-semibold font-sans">{tNav('sign_out')}</span>
+                    </Button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 

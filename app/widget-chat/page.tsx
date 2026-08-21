@@ -129,16 +129,16 @@ function WidgetChatContent() {
           style={{ backgroundColor: primaryColor }}
         >
           {settings?.avatar_url ? (
-            <img src={settings.avatar_url} className="w-full h-full object-cover" alt="bot" />
+            <img src={settings.avatar_url} className="w-full h-full object-cover" alt="AI Assistant" />
           ) : (
-            <Bot className="w-6 h-6 text-white" />
+            <Sparkles className="w-6 h-6 text-white" />
           )}
         </div>
         <div className="min-w-0">
-          <h1 className="text-sm font-bold font-outfit truncate text-white">{settings?.name || "Support Bot"}</h1>
+          <h1 className="text-sm font-bold font-outfit truncate text-white">{settings?.name || "Support Assistant"}</h1>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Online</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">AI Assistant</span>
           </div>
         </div>
       </div>

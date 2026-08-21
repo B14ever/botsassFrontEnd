@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck, Clock, User, ChevronLeft, ChevronRight } from 'lucide-react';
-import Sidebar from '@/components/shared/Sidebar';
 import RoleGuard from '@/components/shared/RoleGuard';
 import { Button } from '@/components/ui/button';
 import { useWorkspaceStore } from '@/store/workspaceStore';
@@ -40,7 +39,6 @@ export default function AuditLogsPage() {
 
   return (
     <RoleGuard requiredPermission="view_analytics" requiredPermissionLabel="View Analytics">
-      <Sidebar>
       <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Streamlined Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border/40 flex-wrap gap-4">
@@ -138,8 +136,7 @@ export default function AuditLogsPage() {
             </div>
           )}
         </div>
-        </div>
-      </Sidebar>
+      </div>
     </RoleGuard>
   );
 }

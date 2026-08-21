@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Folder, FolderPlus, Plus, Search, Trash2, Calendar, MoreHorizontal, ArrowRight, AlertCircle } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -131,8 +130,7 @@ export default function ProjectsListPage() {
   );
 
   return (
-    <Sidebar>
-      <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Streamlined Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border/40 flex-wrap gap-4">
           <div>
@@ -334,6 +332,5 @@ export default function ProjectsListPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </Sidebar>
-  );
+    );
 }

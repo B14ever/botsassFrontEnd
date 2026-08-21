@@ -25,8 +25,8 @@ import {
   inviteMember, removeMember, cancelInvitation, softDeleteWorkspace,
 } from "@/lib/api/workspace";
 import { toast } from "sonner";
-import Sidebar from "@/components/shared/Sidebar";
 import { cleanWorkspaceName } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 function getAxiosMsg(err: unknown, fallback = "Something went wrong") {
   const e = err as { response?: { data?: { error?: string } }; message?: string };
@@ -77,6 +77,9 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default function WorkspaceSettingsPage() {
+  const t = useTranslations("workspace_settings");
+  const tWs = useTranslations("workspaces");
+  const tCommon = useTranslations("common");
   const { id: workspaceId } = useParams<{ id: string }>();
   const { data: session } = useSession();
   const router = useRouter();
@@ -115,57 +118,56 @@ export default function WorkspaceSettingsPage() {
   const inviteMut = useMutation({
     mutationFn: () => inviteMember(workspaceId!, inviteEmail.trim(), inviteRoleId),
     onSuccess: () => {
-      toast.success("Invitation sent!");
+      toast.success(tCommon("success"));
       setIsInviteOpen(false);
       setInviteEmail("");
       setInviteRoleId("member");
       refetchInvitations();
     },
-    onError: (err) => toast.error(getAxiosMsg(err, "Failed to send invite")),
+    onError: (err) => toast.error(getAxiosMsg(err, tCommon("error"))),
   });
 
   const removeMemberMut = useMutation({
     mutationFn: (userId: string) => removeMember(workspaceId!, userId),
     onSuccess: () => {
-      toast.success("Member removed");
+      toast.success(tCommon("success"));
       setRemovingUserId(null);
       refetchMembers();
     },
-    onError: (err) => toast.error(getAxiosMsg(err, "Failed to remove member")),
+    onError: (err) => toast.error(getAxiosMsg(err, tCommon("error"))),
   });
 
   const cancelInviteMut = useMutation({
     mutationFn: (token: string) => cancelInvitation(workspaceId!, token),
     onSuccess: () => {
-      toast.success("Invitation cancelled");
+      toast.success(tCommon("success"));
       setCancellingToken(null);
       refetchInvitations();
     },
-    onError: (err) => toast.error(getAxiosMsg(err, "Failed to cancel invitation")),
+    onError: (err) => toast.error(getAxiosMsg(err, tCommon("error"))),
   });
 
   const deleteWorkspaceMut = useMutation({
     mutationFn: () => softDeleteWorkspace(workspaceId!),
     onSuccess: () => {
-      toast.success("Workspace deleted");
+      toast.success(tCommon("success"));
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       router.push("/dashboard/workspaces");
     },
-    onError: (err) => toast.error(getAxiosMsg(err, "Failed to delete workspace")),
+    onError: (err) => toast.error(getAxiosMsg(err, tCommon("error"))),
   });
 
   const pendingInvitations = invitations.filter((i) => i.status === "pending");
   const activeMembers      = members.filter((m) => m.status === "active");
 
   return (
-    <Sidebar>
+    <>
       <div className="flex flex-col min-h-full">
-
-        {/* ── Page Header ─────────────────────────────────────── */}
+        {/* Page Header */}
         <div className="flex items-center gap-3 mb-8">
           <div>
             <h1 className="text-lg font-bold leading-none text-foreground">
-              Workspace Settings
+              {t("title")}
             </h1>
             {workspace && (
               <p className="text-xs text-muted-foreground mt-0.5">{cleanWorkspaceName(workspace.name)}</p>
@@ -174,13 +176,12 @@ export default function WorkspaceSettingsPage() {
         </div>
 
         <div className="max-w-2xl space-y-10">
-
-          {/* ── MEMBERS ─────────────────────────────────────── */}
+          {/* MEMBERS */}
           <section>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-violet-500" />
-                <h2 className="text-sm font-semibold text-foreground">Members</h2>
+                <h2 className="text-sm font-semibold text-foreground">{t("active_members")}</h2>
                 <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {activeMembers.length}
                 </span>
@@ -191,14 +192,14 @@ export default function WorkspaceSettingsPage() {
                 onClick={() => { setInviteEmail(""); setInviteRoleId("member"); setIsInviteOpen(true); }}
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                Invite Member
+                {t("invite_member")}
               </Button>
             </div>
 
             <div className="rounded-xl border border-border divide-y divide-border overflow-hidden">
               {activeMembers.length === 0 && (
                 <div className="py-10 text-center text-sm text-muted-foreground">
-                  No active members found
+                  {tCommon("no_data")}
                 </div>
               )}
               {activeMembers.map((member) => (
@@ -213,7 +214,7 @@ export default function WorkspaceSettingsPage() {
                         {member.user_name ?? "Unknown"}
                       </span>
                       {workspace?.owner_id === member.user_id && (
-                        <span title="Owner"><Crown className="w-3 h-3 text-amber-400 shrink-0" /></span>
+                        <span title={tWs("owner")}><Crown className="w-3 h-3 text-amber-400 shrink-0" /></span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -224,7 +225,7 @@ export default function WorkspaceSettingsPage() {
                     {workspace?.owner_id === member.user_id && (
                       <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">
                         <Crown className="w-3 h-3 text-amber-500 shrink-0" />
-                        Owner
+                        {tWs("owner")}
                       </span>
                     )}
                     {isOwner && member.user_id !== currentUserId && (
@@ -233,7 +234,7 @@ export default function WorkspaceSettingsPage() {
                         variant="ghost"
                         className="h-7 w-7 text-destructive hover:bg-destructive/10"
                         onClick={() => setRemovingUserId(member.user_id)}
-                        title="Remove member"
+                        title={t("remove_member")}
                       >
                         <LogOut className="w-3.5 h-3.5" />
                       </Button>
@@ -244,12 +245,12 @@ export default function WorkspaceSettingsPage() {
             </div>
           </section>
 
-          {/* ── PENDING INVITATIONS ─────────────────────────── */}
+          {/* PENDING INVITATIONS */}
           {pendingInvitations.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-semibold text-foreground">Pending Invitations</h2>
+                <h2 className="text-sm font-semibold text-foreground">{t("pending_invites")}</h2>
                 <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {pendingInvitations.length}
                 </span>
@@ -278,7 +279,7 @@ export default function WorkspaceSettingsPage() {
                           variant="ghost"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => setCancellingToken(inv.token)}
-                          title="Cancel invitation"
+                          title={t("cancel_invite")}
                         >
                           <XCircle className="w-3.5 h-3.5" />
                         </Button>
@@ -290,21 +291,20 @@ export default function WorkspaceSettingsPage() {
             </section>
           )}
 
-          {/* ── DANGER ZONE ─────────────────────────────────── */}
+          {/* DANGER ZONE */}
           {isOwner && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4 h-4 text-destructive" />
-                <h2 className="text-sm font-semibold text-destructive">Danger Zone</h2>
+                <h2 className="text-sm font-semibold text-destructive">{t("danger_title")}</h2>
               </div>
 
               <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Delete this workspace</p>
+                    <p className="text-sm font-semibold text-foreground">{t("delete_btn")}</p>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      All members, knowledge sources, chats, and bots will be permanently removed.
-                      This action cannot be undone.
+                      {t("danger_desc")}
                     </p>
                   </div>
                   <Button
@@ -314,7 +314,7 @@ export default function WorkspaceSettingsPage() {
                     onClick={() => { setDeleteConfirmText(""); setIsDeleteOpen(true); }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete Workspace
+                    {t("delete_btn")}
                   </Button>
                 </div>
               </div>
@@ -323,25 +323,25 @@ export default function WorkspaceSettingsPage() {
         </div>
       </div>
 
-      {/* ── INVITE MODAL ──────────────────────────────────────── */}
+      {/* INVITE MODAL */}
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-violet-500" />
-              Invite a Member
+              {t("invite_member")}
             </DialogTitle>
             <DialogDescription>
-              Send an invitation email to add someone to this workspace.
+              {t("members_desc")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Email address</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("email_placeholder")}</label>
               <Input
                 type="email"
-                placeholder="colleague@company.com"
+                placeholder={t("email_placeholder")}
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && inviteEmail) inviteMut.mutate(); }}
@@ -350,7 +350,7 @@ export default function WorkspaceSettingsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsInviteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsInviteOpen(false)}>{tCommon("cancel")}</Button>
             <Button
               onClick={() => inviteMut.mutate()}
               disabled={!inviteEmail || inviteMut.isPending}
@@ -359,73 +359,71 @@ export default function WorkspaceSettingsPage() {
               {inviteMut.isPending
                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 : <Mail className="w-3.5 h-3.5" />}
-              Send Invite
+              {t("send_invite")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── REMOVE MEMBER CONFIRM ─────────────────────────────── */}
+      {/* REMOVE MEMBER CONFIRM */}
       <Dialog open={!!removingUserId} onOpenChange={() => setRemovingUserId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <LogOut className="w-4 h-4" /> Remove Member
+              <LogOut className="w-4 h-4" /> {t("remove_member")}
             </DialogTitle>
             <DialogDescription>
-              Are you sure? This member will lose access to the workspace immediately.
+              {tCommon("confirm")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemovingUserId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRemovingUserId(null)}>{tCommon("cancel")}</Button>
             <Button
               variant="destructive"
               disabled={removeMemberMut.isPending}
               onClick={() => removingUserId && removeMemberMut.mutate(removingUserId)}
             >
               {removeMemberMut.isPending && <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              Remove
+              {t("remove_member")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── CANCEL INVITE CONFIRM ─────────────────────────────── */}
+      {/* CANCEL INVITE CONFIRM */}
       <Dialog open={!!cancellingToken} onOpenChange={() => setCancellingToken(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-500">
-              <XCircle className="w-4 h-4" /> Cancel Invitation
+              <XCircle className="w-4 h-4" /> {t("cancel_invite")}
             </DialogTitle>
             <DialogDescription>
-              This will revoke the pending invitation. The recipient&#39;s link will no longer work.
+              {tCommon("confirm")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancellingToken(null)}>Keep It</Button>
+            <Button variant="outline" onClick={() => setCancellingToken(null)}>{tCommon("cancel")}</Button>
             <Button
               variant="destructive"
               disabled={cancelInviteMut.isPending}
               onClick={() => cancellingToken && cancelInviteMut.mutate(cancellingToken)}
             >
               {cancelInviteMut.isPending && <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              Cancel Invitation
+              {t("cancel_invite")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── DELETE WORKSPACE CONFIRM ──────────────────────────── */}
+      {/* DELETE WORKSPACE CONFIRM */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-4 h-4" /> Delete Workspace
+              <AlertTriangle className="w-4 h-4" /> {t("delete_modal_title")}
             </DialogTitle>
             <DialogDescription>
-              This is permanent and cannot be undone. Type{" "}
-              <strong className="text-foreground">{workspace?.name}</strong>{" "}
-              to confirm.
+              {t("delete_modal_desc", { name: workspace?.name || "" })}
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
@@ -436,7 +434,7 @@ export default function WorkspaceSettingsPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>{tCommon("cancel")}</Button>
             <Button
               variant="destructive"
               className="gap-1.5"
@@ -446,11 +444,11 @@ export default function WorkspaceSettingsPage() {
               {deleteWorkspaceMut.isPending
                 ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 : <Trash2 className="w-3.5 h-3.5" />}
-              Delete Forever
+              {t("delete_btn")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Sidebar>
+    </>
   );
 }

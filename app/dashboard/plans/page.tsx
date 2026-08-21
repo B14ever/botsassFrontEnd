@@ -7,14 +7,13 @@ import {
   TrendingUp, MessageSquare, Bot,
   Globe, FileText, BarChart3, Radio, FolderOpen,
 } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
 import RoleGuard from "@/components/shared/RoleGuard";
 import PageHeader from "@/components/shared/PageHeader";
 import { PaymentButton } from "@/components/pricing/PaymentButton";
 import { fetchPlans, type Plan } from "@/lib/api/plans";
 import { fetchSubscription } from "@/lib/api/subscription";
+import { useTranslations } from "next-intl";
 
-// Team plan removed — only Free, Standard, Pro
 const TIER_ORDER = ["free", "standard", "pro"] as const;
 type TierCode = (typeof TIER_ORDER)[number];
 
@@ -54,33 +53,33 @@ const PLAN_META: Record<string, {
 
 type RowDef = {
   key: string;
-  label: string;
+  labelKey: string;
   icon: React.ReactNode;
   getValue: (p: Plan) => string | boolean;
   isBoolean?: boolean;
 };
 
-const ROW_GROUPS: { heading: string; rows: RowDef[] }[] = [
+const ROW_GROUPS: { headingKey: string; rows: RowDef[] }[] = [
   {
-    heading: "Usage Limits",
+    headingKey: "usage_limits_heading",
     rows: [
-      { key: "bots",     label: "Bots",              icon: <Bot className="w-3.5 h-3.5" />,          getValue: (p) => p.limits.bots.toLocaleString() },
-      { key: "sources",  label: "Sources per bot",    icon: <Globe className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.sources.toLocaleString() },
-      { key: "chat",     label: "Monthly chats",      icon: <MessageSquare className="w-3.5 h-3.5" />, getValue: (p) => p.limits.chat_messages_per_month.toLocaleString() },
-      { key: "website",  label: "Website pages / mo", icon: <Globe className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.website_pages_per_month.toLocaleString() },
-      { key: "pdf",      label: "PDF pages / mo",     icon: <FileText className="w-3.5 h-3.5" />,     getValue: (p) => p.limits.pdf_pages_per_month.toLocaleString() },
-      { key: "projects", label: "Workspaces",         icon: <FolderOpen className="w-3.5 h-3.5" />,   getValue: (p) => p.limits.projects.toLocaleString() },
-      { key: "projmsgs", label: "Workspace messages", icon: <MessageSquare className="w-3.5 h-3.5" />, getValue: (p) => p.limits.project_messages.toLocaleString() },
-      { key: "reports",  label: "Reports & PPTX gen", icon: <BarChart3 className="w-3.5 h-3.5" />,    getValue: (p) => p.limits.reports_generated.toLocaleString() },
-      { key: "channels", label: "Social channels",    icon: <Radio className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.channels_connected.toLocaleString() },
+      { key: "bots",     labelKey: "row_bots",              icon: <Bot className="w-3.5 h-3.5" />,          getValue: (p) => p.limits.bots.toLocaleString() },
+      { key: "sources",  labelKey: "row_sources",           icon: <Globe className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.sources.toLocaleString() },
+      { key: "chat",     labelKey: "row_chats",             icon: <MessageSquare className="w-3.5 h-3.5" />, getValue: (p) => p.limits.chat_messages_per_month.toLocaleString() },
+      { key: "website",  labelKey: "row_website",           icon: <Globe className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.website_pages_per_month.toLocaleString() },
+      { key: "pdf",      labelKey: "row_pdf",               icon: <FileText className="w-3.5 h-3.5" />,     getValue: (p) => p.limits.pdf_pages_per_month.toLocaleString() },
+      { key: "projects", labelKey: "row_workspaces",        icon: <FolderOpen className="w-3.5 h-3.5" />,   getValue: (p) => p.limits.projects.toLocaleString() },
+      { key: "projmsgs", labelKey: "row_projmsgs",          icon: <MessageSquare className="w-3.5 h-3.5" />, getValue: (p) => p.limits.project_messages.toLocaleString() },
+      { key: "reports",  labelKey: "row_reports",           icon: <BarChart3 className="w-3.5 h-3.5" />,    getValue: (p) => p.limits.reports_generated.toLocaleString() },
+      { key: "channels", labelKey: "row_channels",          icon: <Radio className="w-3.5 h-3.5" />,        getValue: (p) => p.limits.channels_connected.toLocaleString() },
     ],
   },
   {
-    heading: "Team Collaboration",
+    headingKey: "team_collab_heading",
     rows: [
       {
         key: "invite_members",
-        label: "Invite team members",
+        labelKey: "row_invite",
         icon: <Users className="w-3.5 h-3.5" />,
         getValue: (p) => p.code === "pro",
         isBoolean: true,
@@ -88,16 +87,16 @@ const ROW_GROUPS: { heading: string; rows: RowDef[] }[] = [
     ],
   },
   {
-    heading: "AI Quality",
+    headingKey: "ai_quality_heading",
     rows: [
-      { key: "reasoning", label: "Reasoning quality", icon: <TrendingUp className="w-3.5 h-3.5" />, getValue: (p) => p.reasoning_quality },
+      { key: "reasoning", labelKey: "row_reasoning", icon: <TrendingUp className="w-3.5 h-3.5" />, getValue: (p) => p.reasoning_quality },
       {
-        key: "paid_llm", label: "Paid LLMs", icon: <Zap className="w-3.5 h-3.5" />,
+        key: "paid_llm", labelKey: "row_paid_llm", icon: <Zap className="w-3.5 h-3.5" />,
         getValue: (p) => p.llm_class === "paid",
         isBoolean: true,
       },
       {
-        key: "premium_reasoning", label: "Premium reasoning", icon: <Crown className="w-3.5 h-3.5" />,
+        key: "premium_reasoning", labelKey: "row_premium_reasoning", icon: <Crown className="w-3.5 h-3.5" />,
         getValue: (p) => p.reasoning_quality === "premium",
         isBoolean: true,
       },
@@ -106,6 +105,8 @@ const ROW_GROUPS: { heading: string; rows: RowDef[] }[] = [
 ];
 
 export default function PlansPage() {
+  const t = useTranslations("plans");
+  const tCommon = useTranslations("common");
   const { data: allPlans = [] } = useQuery({ queryKey: ["plans"], queryFn: fetchPlans });
   const { data: subscription } = useQuery({ queryKey: ["subscription"], queryFn: fetchSubscription });
 
@@ -117,11 +118,10 @@ export default function PlansPage() {
 
   return (
     <RoleGuard requiredPermission="manage_billing" requiredPermissionLabel="Manage Billing">
-      <Sidebar>
       <div className="space-y-10 pb-20 animate-in fade-in duration-300">
         <PageHeader
-          title="Subscription Plans"
-          description="Scale AI agents, knowledge sources, and team collaboration for your workspace."
+          title={t("title")}
+          description={t("subtitle")}
         />
 
         {/* Pro invite callout */}
@@ -130,9 +130,9 @@ export default function PlansPage() {
             <Users className="w-4.5 h-4.5 text-violet-600 dark:text-violet-400" />
           </div>
           <div>
-            <p className="text-sm font-bold text-violet-900 dark:text-violet-100">Team collaboration is a Pro feature</p>
+            <p className="text-sm font-bold text-violet-900 dark:text-violet-100">{t("team_collab_heading")}</p>
             <p className="text-xs text-violet-700 dark:text-violet-300 mt-0.5">
-              Upgrade to <strong>Pro</strong> to invite members to your workspace. Invited members can only interact with the workspace they were added to.
+              {t("pro_desc")}
             </p>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function PlansPage() {
           <div className="rounded-xl border border-border overflow-hidden bg-card">
             <div className="px-6 py-4 border-b border-border bg-secondary/20">
               <h2 className="text-xs font-bold font-sans text-foreground uppercase tracking-widest">
-                Full comparison
+                {t("title")}
               </h2>
             </div>
             <div className="overflow-x-auto custom-scrollbar">
@@ -162,7 +162,7 @@ export default function PlansPage() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left px-6 py-3 text-muted-foreground font-semibold text-xs uppercase tracking-wider w-1/3">
-                      Feature
+                      {t("usage_limits_heading")}
                     </th>
                     {plans.map((p) => {
                       const meta = PLAN_META[p.code] ?? PLAN_META.free;
@@ -188,13 +188,13 @@ export default function PlansPage() {
                 </thead>
                 <tbody>
                   {ROW_GROUPS.map((group) => (
-                    <Fragment key={group.heading}>
+                    <Fragment key={group.headingKey}>
                       <tr className="bg-secondary/30">
                         <td
                           colSpan={plans.length + 1}
                           className="px-6 py-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground"
                         >
-                          {group.heading}
+                          {t(group.headingKey as any)}
                         </td>
                       </tr>
 
@@ -208,7 +208,7 @@ export default function PlansPage() {
                           <td className="px-6 py-3">
                             <span className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
                               {row.icon}
-                              {row.label}
+                              {t(row.labelKey as any)}
                             </span>
                           </td>
                           {plans.map((p) => {
@@ -238,8 +238,7 @@ export default function PlansPage() {
             </div>
           </div>
         )}
-        </div>
-      </Sidebar>
+      </div>
     </RoleGuard>
   );
 }
@@ -253,17 +252,11 @@ function PlanCard({
   currentTierIndex: number;
   thisTierIndex: number;
 }) {
+  const t = useTranslations("plans");
   const isCurrent    = currentTierIndex === thisTierIndex;
   const canUpgrade   = thisTierIndex > currentTierIndex;
   const canDowngrade = thisTierIndex < currentTierIndex && plan.code !== "free";
   const meta         = PLAN_META[plan.code] ?? PLAN_META.free;
-
-  // Pro-specific highlights
-  const highlights: string[] = plan.code === "pro"
-    ? ["Invite unlimited team members", "Members locked to invited workspace", "All Standard features included"]
-    : plan.code === "standard"
-    ? ["Paid LLMs & enhanced reasoning", "All Free features included"]
-    : [];
 
   return (
     <div
@@ -278,7 +271,7 @@ function PlanCard({
       {meta.badge && (
         <div className="absolute top-0 inset-x-0 flex justify-center">
           <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-b-lg bg-violet-500 text-white">
-            {meta.badge}
+            {t("most_popular")}
           </span>
         </div>
       )}
@@ -295,10 +288,10 @@ function PlanCard({
 
         <div className="flex items-baseline gap-1">
           <span className="text-2xl font-black font-outfit text-foreground">
-            {plan.code === "free" ? "Free" : Number(plan.price).toLocaleString()}
+            {plan.code === "free" ? t("free_tier") : Number(plan.price).toLocaleString()}
           </span>
           {plan.code !== "free" && (
-            <span className="text-xs text-muted-foreground font-semibold">ETB / mo</span>
+            <span className="text-xs text-muted-foreground font-semibold">{t("per_month")}</span>
           )}
         </div>
       </div>
@@ -307,53 +300,42 @@ function PlanCard({
 
       <div className="p-6 space-y-2.5 flex-1">
         {[
-          { label: "Bots",          value: plan.limits.bots.toLocaleString() },
-          { label: "Monthly chats", value: plan.limits.chat_messages_per_month.toLocaleString() },
-          { label: "Sources",       value: plan.limits.sources.toLocaleString() },
-          { label: "LLM class",     value: plan.llm_class === "paid" ? "Paid LLMs" : "Free LLMs" },
-          { label: "Reasoning",     value: plan.reasoning_quality },
-          { label: "Team members",  value: plan.code === "pro" ? "Up to 10" : "Solo only" },
+          { label: t("row_bots"),          value: plan.limits.bots.toLocaleString() },
+          { label: t("row_chats"),         value: plan.limits.chat_messages_per_month.toLocaleString() },
+          { label: t("row_sources"),       value: plan.limits.sources.toLocaleString() },
+          { label: t("row_paid_llm"),      value: plan.llm_class === "paid" ? "Paid LLMs" : "Free LLMs" },
+          { label: t("row_reasoning"),     value: plan.reasoning_quality },
+          { label: t("row_invite"),        value: plan.code === "pro" ? "Up to 10" : "Solo only" },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">{label}</span>
             <span className={`text-xs font-bold tabular-nums ${
-              label === "Team members" && plan.code === "pro"
+              label === t("row_invite") && plan.code === "pro"
                 ? "text-violet-600 dark:text-violet-400"
                 : "text-foreground"
             }`}>{value}</span>
           </div>
         ))}
-
-        {highlights.length > 0 && (
-          <div className="pt-2 border-t border-border/40 space-y-1.5">
-            {highlights.map((h) => (
-              <div key={h} className="flex items-start gap-1.5">
-                <Check className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-                <span className="text-[11px] text-muted-foreground leading-tight">{h}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="px-6 pb-6 space-y-2">
         {isCurrent ? (
           <div className="w-full rounded-lg border border-border bg-secondary/80 px-4 py-2 text-xs text-muted-foreground font-semibold text-center">
-            ✓ Current plan
+            ✓ {t("current_active")}
           </div>
         ) : plan.code === "free" ? (
           <div className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2 text-xs text-muted-foreground font-semibold text-center">
-            Always free
+            {t("free_desc")}
           </div>
         ) : canUpgrade ? (
           <PaymentButton
             planCode={plan.code as "standard" | "pro"}
-            label={`Upgrade to ${plan.name}`}
+            label={`${t("upgrade_now")} (${plan.name})`}
           />
         ) : canDowngrade ? (
           <PaymentButton
             planCode={plan.code as "standard" | "pro"}
-            label={`Switch to ${plan.name}`}
+            label={`${t("upgrade_now")} (${plan.name})`}
           />
         ) : null}
       </div>

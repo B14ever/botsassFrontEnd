@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyPayment } from "@/lib/api/payment";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { Spokes } from "@/components/loading-ui/spokes";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -90,12 +91,9 @@ function VerifyPaymentContent() {
         className="bg-secondary backdrop-blur-lg border border-border p-10 rounded-lg shadow-none max-w-md w-full flex flex-col items-center"
       >
         {status === "pending" && (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          >
-            <Loader2 className="w-16 h-16 text-violet-500 mb-6" />
-          </motion.div>
+          <div className="mb-6">
+            <Spokes className="size-16 text-violet-500" />
+          </div>
         )}
         
         {status === "success" && (
@@ -165,7 +163,7 @@ export default function VerifyPaymentPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto">
-        <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" />}>
+        <Suspense fallback={<Spokes className="size-16 mx-auto text-violet-500" />}>
           <VerifyPaymentContent />
         </Suspense>
       </div>

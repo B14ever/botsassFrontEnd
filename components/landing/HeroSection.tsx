@@ -22,6 +22,7 @@ import {
   Settings,
 } from "lucide-react";
 import DarkVeil from "@/components/ui/DarkVeil";
+import { useTranslations } from "next-intl";
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 16 },
@@ -36,6 +37,8 @@ const staggerContainer: Variants = {
 const SLIDE_DURATION_MS = 5000;
 
 export default function HeroSection({ userName }: { userName?: string | null }) {
+  const tLanding = useTranslations("landing.hero");
+  const tNav = useTranslations("nav");
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [activeSlide, setActiveSlide] = useState<number>(0);
@@ -60,13 +63,13 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
       {/* DarkVeil Full Hero Canvas Background */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full z-0 overflow-hidden pointer-events-none opacity-100"
+        className="absolute inset-0 w-full h-full z-0 overflow-hidden pointer-events-none opacity-25 dark:opacity-100 [mask-image:linear-gradient(to_bottom,black_0%,black_65%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_65%,transparent_100%)]"
       >
         <DarkVeil
           speed={0.4}
           warpAmount={0.3}
           noiseIntensity={0.02}
-          scanlineIntensity={isDark ? 0.06 : 0.02}
+          scanlineIntensity={isDark ? 0.06 : 0.01}
           scanlineFrequency={2.0}
           hueShift={0}
           invert={!isDark}
@@ -74,7 +77,19 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
         />
       </div>
 
-      <div className="relative z-10 w-full px-4 sm:px-6 pt-32 pb-8 sm:pb-10 md:pb-12 md:pt-36 flex flex-col items-center text-center max-w-7xl mx-auto space-y-8">
+      {/* Subtle Light Mode Ambient Radial Light */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-12 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[450px] bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.06),_rgba(139,92,246,0.03),_transparent_70%)] opacity-100 dark:opacity-0 z-0"
+      />
+
+      {/* Smooth Multi-Stop Background Fade Transition into Features Section */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-80 md:h-96 bg-gradient-to-b from-transparent via-[#fafafa]/80 dark:via-background/80 to-[#fafafa] dark:to-background z-10"
+      />
+
+      <div className="relative z-20 w-full px-4 sm:px-6 pt-32 pb-16 sm:pb-24 md:pb-32 md:pt-36 flex flex-col items-center text-center max-w-7xl mx-auto space-y-8">
         <motion.div
           initial="hidden"
           animate="show"
@@ -86,10 +101,10 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
             variants={fadeInUp}
             className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.15] text-foreground max-w-4xl"
           >
-            The AI Operating System{" "}
+            {tLanding("title_line1")}{" "}
             <br className="hidden sm:inline" />
             <span className="text-zinc-600 dark:text-zinc-400">
-              for Your Workspace.
+              {tLanding("title_gradient")} {tLanding("title_line2")}
             </span>
           </motion.h1>
 
@@ -98,8 +113,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
             variants={fadeInUp}
             className="mt-4 max-w-2xl text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed"
           >
-            Deploy conversational AI agents across your website and messaging apps. Automate customer
-            support and generate business deliverables in seconds.
+            {tLanding("description")}
           </motion.p>
 
           {/* Call to Actions */}
@@ -113,10 +127,10 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
               asChild
             >
               <Link
-                href={userName ? "/dashboard" : "/register"}
+                href={userName ? "/dashboard" : "/signup"}
                 className="flex items-center justify-center gap-2"
               >
-                {userName ? "Go to Dashboard" : "Start Free Trial"}
+                {userName ? tNav("dashboard") : tLanding("primary_cta")}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </Button>
@@ -127,7 +141,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
               className="h-11 px-6 rounded-md font-semibold text-sm border-border text-foreground hover:bg-secondary/60 w-full sm:w-auto backdrop-blur-sm"
               asChild
             >
-              <a href="#how-it-works">Book a Demo</a>
+              <a href="#how-it-works">{tLanding("secondary_cta")}</a>
             </Button>
           </motion.div>
 
@@ -137,7 +151,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
             className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 font-medium"
           >
             <span>
-              Trusted by teams managing support, sales, and internal knowledge across 50+ organizations
+              {tLanding("trust_bar")}
             </span>
           </motion.div>
 
@@ -197,7 +211,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       <div className="w-5 h-5 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px] shrink-0">
                         W
                       </div>
-                      <span className="text-xs font-semibold truncate text-foreground">Main Workspace</span>
+                      <span className="text-xs font-semibold truncate text-foreground">{tLanding("preview.main_workspace")}</span>
                     </div>
                     <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
                   </div>
@@ -212,7 +226,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       }`}
                     >
                       <LayoutDashboard className="w-3.5 h-3.5" />
-                      <span>Dashboard</span>
+                      <span>{tNav("dashboard")}</span>
                     </div>
 
                     <div
@@ -223,7 +237,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       }`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
-                      <span>Workspaces</span>
+                      <span>{tNav("workspaces")}</span>
                     </div>
 
                     <div
@@ -234,27 +248,27 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       }`}
                     >
                       <Bot className={`w-3.5 h-3.5 ${activeSlide === 1 ? "text-primary" : ""}`} />
-                      <span>Agents</span>
+                      <span>{tNav("bots")}</span>
                     </div>
 
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-muted-foreground">
                       <Activity className="w-3.5 h-3.5" />
-                      <span>Usage</span>
+                      <span>{tNav("usage")}</span>
                     </div>
 
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-muted-foreground">
                       <CreditCard className="w-3.5 h-3.5" />
-                      <span>Billing</span>
+                      <span>{tNav("billing")}</span>
                     </div>
 
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-muted-foreground">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Plans</span>
+                      <span>{tNav("pricing")}</span>
                     </div>
 
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-muted-foreground">
                       <User className="w-3.5 h-3.5" />
-                      <span>Settings</span>
+                      <span>{tNav("settings")}</span>
                     </div>
                   </nav>
                 </div>
@@ -262,7 +276,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                 {/* Plan Indicator */}
                 <div className="p-2.5 rounded-md bg-white/60 dark:bg-zinc-800/50 backdrop-blur-md text-[11px] space-y-1.5">
                   <div className="flex items-center justify-between font-medium">
-                    <span className="text-muted-foreground">Standard Plan</span>
+                    <span className="text-muted-foreground">{tLanding("preview.standard_plan")}</span>
                     <span className="text-foreground font-semibold">3 / 3</span>
                   </div>
                   <div className="w-full h-1 bg-secondary/80 rounded-full overflow-hidden">
@@ -288,16 +302,16 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <h2 className="text-sm sm:text-base font-bold tracking-tight text-foreground font-outfit">
-                            Welcome
+                            {tLanding("preview.dashboard_title")}
                           </h2>
                           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 line-clamp-1 sm:line-clamp-none">
-                            Overview of workspace usage analytics, interactive graphs, and active projects.
+                            {tLanding("preview.dashboard_desc")}
                           </p>
                         </div>
                         <div className="h-7 sm:h-8 px-2 sm:px-2.5 rounded-md bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md text-foreground text-[10px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shrink-0">
                           <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          <span className="hidden sm:inline">Workspaces Overview</span>
-                          <span className="sm:hidden">Workspaces</span>
+                          <span className="hidden sm:inline">{tLanding("preview.workspaces_overview")}</span>
+                          <span className="sm:hidden">{tNav("workspaces")}</span>
                         </div>
                       </div>
 
@@ -306,7 +320,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3.5 rounded-lg flex flex-col justify-between">
                           <div>
                             <span className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                              Messages this month
+                              {tLanding("preview.messages_this_month")}
                             </span>
                             <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 mt-0.5">
                               Oct 1 - Oct 31, 2026
@@ -323,10 +337,10 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md p-2.5 sm:p-3.5 rounded-lg flex flex-col justify-between">
                           <div>
                             <span className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                              Connected Channels
+                              {tLanding("preview.connected_channels")}
                             </span>
                             <p className="text-[8px] sm:text-[9px] text-muted-foreground/70 mt-0.5">
-                              Active Telegram and WhatsApp bots
+                              {tLanding("preview.channels_sub")}
                             </p>
                           </div>
                           <div className="text-lg sm:text-xl font-bold text-foreground mt-1 sm:mt-2">
@@ -343,9 +357,9 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                         <div className="flex items-center justify-between pb-1 sm:pb-2">
                           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                             <LineIcon className="w-3.5 h-3.5 text-primary" />
-                            Messages over the last 14 days
+                            {tLanding("preview.messages_chart_title")}
                           </span>
-                          <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">Daily Activity</span>
+                          <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">{tLanding("preview.daily_activity")}</span>
                         </div>
 
                         {/* High-Fidelity SVG Line Graph Visualization */}
@@ -379,7 +393,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                           <span>Oct 14</span>
                           <span>Oct 18</span>
                           <span>Oct 22</span>
-                          <span>Today</span>
+                          <span>{tLanding("preview.today")}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -399,25 +413,25 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <h2 className="text-sm sm:text-base font-bold tracking-tight text-foreground font-outfit">
-                            AI Agents
+                            {tLanding("preview.agents_title")}
                           </h2>
                           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 line-clamp-1 sm:line-clamp-none">
-                            Configure, deploy, and train grounded support bots for your workspace.
+                            {tLanding("preview.agents_desc")}
                           </p>
                         </div>
                         <div className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-md bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shrink-0">
                           <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          <span>New AI Agent</span>
+                          <span>{tLanding("preview.new_agent")}</span>
                         </div>
                       </div>
 
                       {/* Exact Toolbar from /dashboard/agents */}
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] sm:text-xs font-semibold text-foreground">3 Agents</span>
+                        <span className="text-[11px] sm:text-xs font-semibold text-foreground">{tLanding("preview.agents_count")}</span>
                         <div className="relative w-36 sm:w-48">
                           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
                           <div className="pl-7 pr-2 py-0.5 sm:py-1 text-[10px] sm:text-[11px] rounded-md bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md text-muted-foreground truncate">
-                            Search agents...
+                            {tLanding("preview.search_placeholder")}
                           </div>
                         </div>
                       </div>
@@ -433,16 +447,16 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                               </div>
                               <span className="text-[8px] sm:text-[9px] font-medium text-muted-foreground">Oct 14, 2026</span>
                             </div>
-                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">Customer Support</h3>
+                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">{tLanding("preview.support_bot_name")}</h3>
                             <p className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
-                              Custom AI support agent trained on workspace knowledge.
+                              {tLanding("preview.support_bot_desc")}
                             </p>
                           </div>
 
                           <div className="flex items-center gap-1.5 pt-1.5 sm:pt-2">
                             <div className="flex-1 h-6 sm:h-7 rounded bg-secondary/70 hover:bg-secondary text-foreground text-[9px] sm:text-[10px] font-medium flex items-center justify-center gap-1 transition-colors">
                               <MessageSquare className="w-3 h-3" />
-                              Test Chat
+                              {tLanding("preview.test_chat")}
                             </div>
                             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-secondary/70 flex items-center justify-center text-muted-foreground">
                               <Settings className="w-3 h-3" />
@@ -459,16 +473,16 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                               </div>
                               <span className="text-[8px] sm:text-[9px] font-medium text-muted-foreground">Oct 18, 2026</span>
                             </div>
-                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">Sales Assistant</h3>
+                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">{tLanding("preview.sales_bot_name")}</h3>
                             <p className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
-                              Lead qualification agent connected to Telegram and WhatsApp.
+                              {tLanding("preview.sales_bot_desc")}
                             </p>
                           </div>
 
                           <div className="flex items-center gap-1.5 pt-1.5 sm:pt-2">
                             <div className="flex-1 h-6 sm:h-7 rounded bg-secondary/70 hover:bg-secondary text-foreground text-[9px] sm:text-[10px] font-medium flex items-center justify-center gap-1 transition-colors">
                               <MessageSquare className="w-3 h-3" />
-                              Test Chat
+                              {tLanding("preview.test_chat")}
                             </div>
                             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-secondary/70 flex items-center justify-center text-muted-foreground">
                               <Settings className="w-3 h-3" />
@@ -485,16 +499,16 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                               </div>
                               <span className="text-[8px] sm:text-[9px] font-medium text-muted-foreground">Oct 22, 2026</span>
                             </div>
-                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">DocGen Assistant</h3>
+                            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground">{tLanding("preview.docgen_bot_name")}</h3>
                             <p className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
-                              Automated reports & presentations generation agent.
+                              {tLanding("preview.docgen_bot_desc")}
                             </p>
                           </div>
 
                           <div className="flex items-center gap-1.5 pt-1.5 sm:pt-2">
                             <div className="flex-1 h-6 sm:h-7 rounded bg-secondary/70 hover:bg-secondary text-foreground text-[9px] sm:text-[10px] font-medium flex items-center justify-center gap-1 transition-colors">
                               <MessageSquare className="w-3 h-3" />
-                              Test Chat
+                              {tLanding("preview.test_chat")}
                             </div>
                             <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-secondary/70 flex items-center justify-center text-muted-foreground">
                               <Settings className="w-3 h-3" />
@@ -519,22 +533,22 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <h2 className="text-sm sm:text-base font-bold tracking-tight text-foreground font-outfit">
-                            Workspaces
+                            {tLanding("preview.workspaces_title")}
                           </h2>
                           <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 line-clamp-1 sm:line-clamp-none">
-                            Select a workspace to open its chat, upload documents, and manage team invitations.
+                            {tLanding("preview.workspaces_desc")}
                           </p>
                         </div>
                         <div className="h-7 sm:h-8 px-2.5 sm:px-3 rounded-md bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 shrink-0">
                           <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          <span>Add Workspace</span>
+                          <span>{tLanding("preview.add_workspace")}</span>
                         </div>
                       </div>
 
                       {/* Exact Section Header */}
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                         <Building2 className="w-3.5 h-3.5 text-primary" />
-                        <span>Your Workspaces (2)</span>
+                        <span>{tLanding("preview.your_workspaces")}</span>
                       </div>
 
                       {/* Exact Workspaces Cards Grid from /dashboard/workspaces */}
@@ -554,14 +568,14 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                             <div>
                               <div className="flex items-center justify-between gap-2">
                                 <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight truncate">
-                                  Main Workspace
+                                  {tLanding("preview.main_workspace")}
                                 </h3>
                                 <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500">
-                                  Owner
+                                  {tLanding("preview.owner")}
                                 </span>
                               </div>
                               <p className="text-[9px] sm:text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                Train AI bots with custom knowledge sources and interact with them in this workspace.
+                                {tLanding("preview.workspace_card_desc")}
                               </p>
                             </div>
                           </div>
@@ -569,7 +583,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                           <div className="flex items-center gap-1.5 pt-2">
                             <div className="flex-1 h-7 sm:h-8 rounded bg-secondary/70 hover:bg-secondary text-foreground text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1.5 transition-colors">
                               <Building2 className="w-3.5 h-3.5" />
-                              Open Workspace
+                              {tLanding("preview.open_workspace")}
                             </div>
                             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-secondary/70 flex items-center justify-center text-muted-foreground">
                               <Settings className="w-3.5 h-3.5" />
@@ -592,14 +606,14 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                             <div>
                               <div className="flex items-center justify-between gap-2">
                                 <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight truncate">
-                                  Support & Operations
+                                  {tLanding("preview.support_ops_workspace")}
                                 </h3>
                                 <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">
-                                  Member
+                                  {tLanding("preview.member")}
                                 </span>
                               </div>
                               <p className="text-[9px] sm:text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                Train AI bots with custom knowledge sources and interact with them in this workspace.
+                                {tLanding("preview.workspace_card_desc")}
                               </p>
                             </div>
                           </div>
@@ -607,7 +621,7 @@ export default function HeroSection({ userName }: { userName?: string | null }) 
                           <div className="flex items-center gap-1.5 pt-2">
                             <div className="flex-1 h-7 sm:h-8 rounded bg-secondary/70 hover:bg-secondary text-foreground text-[10px] sm:text-xs font-medium flex items-center justify-center gap-1.5 transition-colors">
                               <Building2 className="w-3.5 h-3.5" />
-                              Open Workspace
+                              {tLanding("preview.open_workspace")}
                             </div>
                             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-secondary/70 flex items-center justify-center text-muted-foreground">
                               <Settings className="w-3.5 h-3.5" />

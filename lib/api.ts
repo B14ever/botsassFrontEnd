@@ -30,6 +30,15 @@ api.interceptors.request.use(async (config) => {
     config.headers['X-Workspace-ID'] = activeWorkspaceId;
   }
 
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]*)/);
+    if (match && match[1]) {
+      config.headers['Accept-Language'] = decodeURIComponent(match[1]);
+    } else {
+      config.headers['Accept-Language'] = 'en';
+    }
+  }
+
   return config;
 });
 

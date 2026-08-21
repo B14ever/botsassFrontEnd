@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Bot, Globe, LayoutGrid, MessageSquare, Plus, Search, Settings, ArrowRight } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
+import { Bot, Globe, MessageSquare, Plus, Search, Settings } from "lucide-react";
 import RoleGuard from "@/components/shared/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,7 @@ import { useWorkspaceStore } from "@/store/workspaceStore";
 import { useAuthStore } from "@/store/authStore";
 import { listMembers, getWorkspace, type WorkspaceMember } from "@/lib/api/workspace";
 import { cleanWorkspaceName } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 type BotRecord = {
   id: string;
@@ -24,6 +24,8 @@ type BotRecord = {
 };
 
 export default function AgentsPage() {
+  const t = useTranslations("agents");
+  const tCommon = useTranslations("common");
   const [searchTerm, setSearchTerm] = useState("");
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const currentUser = useAuthStore((s) => s.user);
@@ -59,38 +61,36 @@ export default function AgentsPage() {
 
   return (
     <RoleGuard requireOwner requiredPermissionLabel="Workspace Owner">
-      <Sidebar>
       <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Streamlined Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border/40 flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground font-outfit">
-              AI Agents
+              {t("title")}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Configure, deploy, and train grounded support bots for {workspace ? cleanWorkspaceName(workspace.name) : "your workspace"}.
+              {t("subtitle", {
+                workspace: workspace ? cleanWorkspaceName(workspace.name) : "your workspace",
+              })}
             </p>
           </div>
 
           {!isViewer && (
             <Link href="/dashboard/create">
-              <Button size="sm" className="gap-2 h-9">
-                <Plus className="w-4 h-4" />
-                New AI Agent
+              <Button size="sm" className="gap-1.5 h-9 text-xs font-semibold">
+                <Plus className="w-3.5 h-3.5" />
+                {t("create_agent")}
               </Button>
             </Link>
           )}
         </div>
 
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <span className="text-xs font-semibold text-foreground">
-            {filteredBots.length} Agent{filteredBots.length !== 1 ? "s" : ""}
-          </span>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+        {/* Search Bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search agents..."
+              placeholder={t("filter_placeholder")}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               className="pl-9 h-8 text-xs bg-background"
@@ -109,28 +109,29 @@ export default function AgentsPage() {
           ) : (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center border border-dashed border-border/70 rounded-lg bg-card">
               <Bot className="w-10 h-10 text-muted-foreground/30 mb-2" />
-              <h3 className="text-foreground font-semibold text-sm">No agents found</h3>
+              <h3 className="text-foreground font-semibold text-sm">{t("no_agents_title")}</h3>
               <p className="text-muted-foreground max-w-xs mx-auto mt-1 text-xs">
-                Build your first grounded AI support agent to start handling customer inquiries.
+                {t("no_agents_desc")}
               </p>
               {!isViewer && (
                 <Link href="/dashboard/create" className="mt-4">
                   <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
                     <Plus className="w-3.5 h-3.5" />
-                    Create Agent
+                    {t("create_agent")}
                   </Button>
                 </Link>
               )}
             </div>
           )}
         </div>
-        </div>
-      </Sidebar>
+      </div>
     </RoleGuard>
   );
 }
 
 function BotCard({ bot, isViewer }: { bot: BotRecord; isViewer: boolean }) {
+  const t = useTranslations("agents");
+
   return (
     <div className="border border-border/80 bg-card rounded-lg p-4 shadow-xs flex flex-col justify-between hover:border-border transition-all space-y-4">
       <Link href={`/dashboard/agents/${bot.id}`} className="space-y-2 flex-1 cursor-pointer group">
@@ -154,7 +155,7 @@ function BotCard({ bot, isViewer }: { bot: BotRecord; isViewer: boolean }) {
         <Link href={`/dashboard/agents/${bot.id}?tab=preview-widget`} className="flex-1">
           <Button size="sm" variant="secondary" className="w-full h-8 text-xs font-medium gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
-            Test Chat
+            {t("test_chat")}
           </Button>
         </Link>
         <Link href={`/dashboard/agents/${bot.id}?tab=integration-widget`}>

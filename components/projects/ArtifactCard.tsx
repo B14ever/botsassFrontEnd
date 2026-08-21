@@ -22,26 +22,23 @@ import SlidesPreview from "./SlidesPreview";
 import ReportPreview from "./ReportPreview";
 import SpreadsheetPreview from "./SpreadsheetPreview";
 import ImagePreview from "./ImagePreview";
+import { useTranslations } from "next-intl";
 
-const TOOL_META: Record<string, { label: string; icon: typeof Presentation; ext: string }> = {
-  create_presentation: { label: "Presentation", icon: Presentation, ext: "PPTX" },
-  write_report: { label: "Report", icon: FileText, ext: "DOCX" },
-  analyze_data: { label: "Spreadsheet", icon: FileSpreadsheet, ext: "XLSX" },
-  generate_image: { label: "Image", icon: ImageIcon, ext: "PNG" },
+const TOOL_ICONS: Record<string, typeof Presentation> = {
+  create_presentation: Presentation,
+  write_report: FileText,
+  analyze_data: FileSpreadsheet,
+  generate_image: ImageIcon,
 };
 
-// Images aren't editable yet — the image model's edit/image-to-image support
-// isn't confirmed, and the backend enforces the same restriction.
+const TOOL_EXTS: Record<string, string> = {
+  create_presentation: "PPTX",
+  write_report: "DOCX",
+  analyze_data: "XLSX",
+  generate_image: "PNG",
+};
+
 const EDITABLE_TOOL_TYPES = new Set(["create_presentation", "write_report", "analyze_data"]);
-
-const STAGE_LABELS: Record<string, string> = {
-  queued: "Queued…",
-  fetching_sources: "Reading knowledge base…",
-  loading_previous: "Loading previous version…",
-  drafting: "Drafting content…",
-  rendering: "Rendering file…",
-  uploading: "Uploading…",
-};
 
 function ArtifactBody({ job }: { job: ToolJob }) {
   if (!job.content_json) return null;
@@ -77,11 +74,31 @@ export default function ArtifactCard({
   onEdit?: (instruction: string) => void;
   isEditing?: boolean;
 }) {
+  const t = useTranslations("workspace_detail");
   const [expanded, setExpanded] = useState(false);
   const [showEditInput, setShowEditInput] = useState(false);
   const [editInstruction, setEditInstruction] = useState("");
-  const meta = TOOL_META[job.tool_type] || { label: job.tool_type, icon: FileText, ext: "FILE" };
-  const Icon = meta.icon;
+
+  const labelMap: Record<string, string> = {
+    create_presentation: t("slides_tool"),
+    write_report: t("report_tool"),
+    analyze_data: t("spreadsheet_tool"),
+    generate_image: t("image_tool"),
+  };
+
+  const stageMap: Record<string, string> = {
+    queued: t("stage_queued"),
+    fetching_sources: t("stage_fetching_sources"),
+    loading_previous: t("stage_loading_previous"),
+    drafting: t("stage_drafting"),
+    rendering: t("stage_rendering"),
+    uploading: t("stage_uploading"),
+  };
+
+  const label = labelMap[job.tool_type] || job.tool_type;
+  const ext = TOOL_EXTS[job.tool_type] || "FILE";
+  const Icon = TOOL_ICONS[job.tool_type] || FileText;
+
   const isPending = job.status === "pending" || job.status === "processing";
   const isCompleted = job.status === "completed";
   const isFailed = job.status === "failed";
@@ -95,9 +112,6 @@ export default function ArtifactCard({
     setShowEditInput(false);
   };
 
-  // Open automatically the moment a job finishes generating (not for
-  // artifacts that were already complete when this card first mounted, e.g.
-  // loaded from history) — closing it just leaves the card clickable again.
   const prevStatusRef = useRef(job.status);
   useEffect(() => {
     const prevStatus = prevStatusRef.current;
@@ -118,7 +132,7 @@ export default function ArtifactCard({
       className="h-7 px-2.5 text-[10px] font-bold rounded-lg border-border gap-1"
     >
       <Eye className="w-3 h-3" />
-      View
+      {t("artifact_view")}
     </Button>
   );
 
@@ -131,7 +145,7 @@ export default function ArtifactCard({
       className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[10px] py-1.5 px-3 rounded-lg transition-all inline-flex items-center gap-1"
     >
       <Download className="w-3 h-3" />
-      Download
+      {t("artifact_download")}
     </a>
   );
 
@@ -165,20 +179,20 @@ export default function ArtifactCard({
             </div>
             <div className="min-w-0">
               <p className="text-foreground text-[12px] font-bold truncate">
-                {meta.label}
-                <span className="text-muted-foreground font-medium"> · {meta.ext}</span>
+                {label}
+                <span className="text-muted-foreground font-medium"> · {ext}</span>
               </p>
               <p className="text-muted-foreground text-[10px] mt-0.5 flex items-center gap-1">
                 {isPending && (
                   <>
                     <Loader2 className="w-2.5 h-2.5 animate-spin text-primary" />
-                    {STAGE_LABELS[job.progress_stage] || "Working…"}
+                    {stageMap[job.progress_stage] || t("artifact_working")}
                   </>
                 )}
-                {isCompleted && "Ready"}
+                {isCompleted && t("artifact_ready")}
                 {isFailed && (
                   <span className="text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-2.5 h-2.5" /> Failed
+                    <AlertCircle className="w-2.5 h-2.5" /> {t("artifact_failed")}
                   </span>
                 )}
               </p>
@@ -206,8 +220,8 @@ export default function ArtifactCard({
               </div>
               <div className="min-w-0">
                 <DialogTitle className="text-sm font-bold text-foreground truncate">
-                  {meta.label}
-                  <span className="text-muted-foreground font-medium"> · {meta.ext}</span>
+                  {label}
+                  <span className="text-muted-foreground font-medium"> · {ext}</span>
                 </DialogTitle>
                 {job.user_prompt && (
                   <p className="text-muted-foreground text-[11px] truncate mt-0.5">{job.user_prompt}</p>
@@ -224,7 +238,7 @@ export default function ArtifactCard({
                   className="h-7 px-2.5 text-[10px] font-bold rounded-lg border-border gap-1"
                 >
                   {isEditing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Pencil className="w-3 h-3" />}
-                  Edit
+                  {t("artifact_edit")}
                 </Button>
               )}
               {downloadButton}
@@ -236,7 +250,7 @@ export default function ArtifactCard({
             <div className="px-5 py-3 border-b border-border bg-secondary/40 flex items-center gap-2 shrink-0">
               <Input
                 autoFocus
-                placeholder="e.g. Make slide 3 shorter, or add a row for Q4 revenue"
+                placeholder={t("edit_instruction_placeholder")}
                 value={editInstruction}
                 onChange={(e) => setEditInstruction(e.target.value)}
                 onKeyDown={(e) => {
@@ -251,7 +265,7 @@ export default function ArtifactCard({
                 disabled={!editInstruction.trim()}
                 className="h-9 px-4 text-xs font-bold rounded-lg"
               >
-                Apply
+                {t("artifact_apply")}
               </Button>
               <Button
                 type="button"

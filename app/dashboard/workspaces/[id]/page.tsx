@@ -11,7 +11,6 @@ import {
   Presentation, FileSpreadsheet, Image as ImageIcon, X, Loader2, RotateCcw
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import Sidebar from "@/components/shared/Sidebar";
 import ArtifactCard from "@/components/projects/ArtifactCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,15 +45,9 @@ import {
 import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import { getAxiosErrorMessage, type LimitReachedError, isLimitReachedError } from "@/lib/api/errors";
 import { PLATFORM_NAME } from "@/constants";
+import { useTranslations } from "next-intl";
 
-const ROLES = [
-  { id: "bot_manager", name: "Bot Manager", desc: "Manage AI agents, deployment & channels" },
-  { id: "knowledge_manager", name: "Knowledge Manager", desc: "Manage training sources & documents" },
-  { id: "support_agent", name: "Support Agent", desc: "Live customer chat takeovers & support" },
-  { id: "viewer", name: "Viewer", desc: "Read-only access to view workspace & chat" },
-];
-
-function groupChatsByDate(chats: ProjectChat[]) {
+function groupChatsByDate(chats: ProjectChat[], labels: { today: string; yesterday: string; sevenDaysAgo: string; older: string }) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const yesterdayStart = todayStart - 86400000;
@@ -81,14 +74,17 @@ function groupChatsByDate(chats: ProjectChat[]) {
   });
 
   return [
-    { label: "Today", chats: categories["Today"] },
-    { label: "Yesterday", chats: categories["Yesterday"] },
-    { label: "7 days ago", chats: categories["7 days ago"] },
-    { label: "Older", chats: categories["Older"] },
+    { label: labels.today, chats: categories["Today"] },
+    { label: labels.yesterday, chats: categories["Yesterday"] },
+    { label: labels.sevenDaysAgo, chats: categories["7 days ago"] },
+    { label: labels.older, chats: categories["Older"] },
   ].filter((group) => group.chats.length > 0);
 }
 
 export default function SingleWorkspaceDashboardPage() {
+  const t = useTranslations("workspace_detail");
+  const tWs = useTranslations("workspaces");
+  const tCommon = useTranslations("common");
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -131,10 +127,6 @@ export default function SingleWorkspaceDashboardPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [limitError, setLimitError] = useState<LimitReachedError | null>(null);
-  // Messages sent but not yet reflected in the fetched history — shown
-  // immediately so the user's own text never waits on a round-trip. Failed
-  // sends stay visible (marked `_failed`) with a `_retry` action instead of
-  // silently disappearing.
   type PendingMessage = ProjectMessage & { _failed?: boolean; _retry?: () => void };
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
   const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -144,10 +136,10 @@ export default function SingleWorkspaceDashboardPage() {
   // Document generation tools (slides / report / spreadsheet / image)
   type ToolTypeOption = 'create_presentation' | 'write_report' | 'analyze_data' | 'generate_image';
   const TOOL_LABELS: Record<ToolTypeOption, string> = {
-    create_presentation: "presentation",
-    write_report: "report",
-    analyze_data: "spreadsheet",
-    generate_image: "image",
+    create_presentation: t("slides_tool"),
+    write_report: t("report_tool"),
+    analyze_data: t("spreadsheet_tool"),
+    generate_image: t("image_tool"),
   };
   const [jobsById, setJobsById] = useState<Record<string, ToolJob>>({});
   const [regeneratingJobId, setRegeneratingJobId] = useState<string | null>(null);
@@ -205,7 +197,14 @@ export default function SingleWorkspaceDashboardPage() {
     enabled: !!workspaceId,
   });
 
-  const groupedChatHistory = useMemo(() => groupChatsByDate(chatThreads), [chatThreads]);
+  const dateLabels = useMemo(() => ({
+    today: t("today"),
+    yesterday: t("yesterday"),
+    sevenDaysAgo: t("seven_days_ago"),
+    older: t("older"),
+  }), [t]);
+
+  const groupedChatHistory = useMemo(() => groupChatsByDate(chatThreads, dateLabels), [chatThreads, dateLabels]);
 
   useEffect(() => {
     if (chatThreads.length > 0 && !activeChatId) {
@@ -228,10 +227,6 @@ export default function SingleWorkspaceDashboardPage() {
     enabled: !!workspaceId && !!activeChatId,
   });
 
-  // pendingMessages (including stale failed ones) must be scoped to the
-  // active chat and merged by actual timestamp, not just appended —
-  // otherwise a failed message from another thread leaks into view, or
-  // keeps rendering after every new exchange as if it were "the latest" chat.
   const displayMessages = useMemo<PendingMessage[]>(
     () =>
       [...messages, ...pendingMessages.filter((m) => m.chat_id === activeChatId)].sort(
@@ -244,14 +239,14 @@ export default function SingleWorkspaceDashboardPage() {
   const createChatMutation = useMutation({
     mutationFn: () => createProjectChat(workspaceId!, `Chat ${chatThreads.length + 1}`),
     onSuccess: (newChat) => {
-      toast.success("New chat session created");
+      toast.success(t("new_chat_created"));
       queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
       if (newChat?.id) {
         setActiveChatId(newChat.id);
       }
     },
     onError: (e: any) => {
-      toast.error(getAxiosErrorMessage(e, "Failed to create chat thread"));
+      toast.error(getAxiosErrorMessage(e, tCommon("error")));
     },
   });
 
@@ -259,13 +254,13 @@ export default function SingleWorkspaceDashboardPage() {
   const inviteMutation = useMutation({
     mutationFn: () => inviteMember(workspaceId!, inviteEmail.trim(), inviteRole),
     onSuccess: (inv) => {
-      toast.success(`Invitation sent to ${inviteEmail}`);
+      toast.success(tCommon("success"));
       setCreatedInviteToken(inv.token);
       setInviteError(null);
       queryClient.invalidateQueries({ queryKey: ["workspace-invitations", workspaceId] });
     },
     onError: (e: any) => {
-      setInviteError(e?.response?.data?.error || e?.message || "Failed to send invitation");
+      setInviteError(e?.response?.data?.error || e?.message || tCommon("error"));
     },
   });
 
@@ -284,7 +279,7 @@ export default function SingleWorkspaceDashboardPage() {
     const link = `${window.location.origin}/org/invite/${token}`;
     void navigator.clipboard.writeText(link);
     setCopied(true);
-    toast.success("Invite link copied to clipboard");
+    toast.success(t("link_copied_toast"));
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -294,21 +289,21 @@ export default function SingleWorkspaceDashboardPage() {
     try {
       if (sourceType === "url" && sourceUrl.trim()) {
         await ingestProjectUrl(workspaceId!, sourceUrl.trim());
-        toast.success("Web URL ingested into backend knowledge base!");
+        toast.success(tCommon("success"));
         setSourceUrl("");
       } else if (sourceType === "pdf" && sourceFile) {
         await ingestProjectPdf(workspaceId!, sourceFile);
-        toast.success(`PDF "${sourceFile.name}" ingested into backend successfully!`);
+        toast.success(tCommon("success"));
         setSourceFile(null);
       } else if (sourceType === "text" && sourceText.trim()) {
         await ingestProjectUrl(workspaceId!, `text://${sourceText.trim().substring(0, 30)}`);
-        toast.success("Text snippet added to workspace knowledge base!");
+        toast.success(tCommon("success"));
         setSourceText("");
       }
       setIsKnowledgeModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["workspace-sources", workspaceId] });
     } catch (err: unknown) {
-      toast.error(getAxiosErrorMessage(err, "Failed to ingest knowledge source"));
+      toast.error(getAxiosErrorMessage(err, tCommon("error")));
     } finally {
       setIsIngesting(false);
     }
@@ -323,8 +318,6 @@ export default function SingleWorkspaceDashboardPage() {
     setLimitError(null);
     setIsTyping(true);
 
-    // Show the user's message instantly instead of waiting on the
-    // POST + refetch round-trip to complete.
     const tempId = genTempId();
     setPendingMessages((prev) => [
       ...prev,
@@ -346,8 +339,6 @@ export default function SingleWorkspaceDashboardPage() {
         targetChatId = "default";
       }
     }
-    // Backfill now that the real target chat is known, so the pending
-    // bubble stays correctly scoped to that chat (not orphaned as "pending").
     setPendingMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, chat_id: targetChatId! } : m)));
 
     try {
@@ -360,12 +351,8 @@ export default function SingleWorkspaceDashboardPage() {
       }
       queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
       await refetchMessages();
-      // Real history (from the refetch above) has already landed by now,
-      // so dropping the placeholder here causes no visible gap.
       setPendingMessages((prev) => prev.filter((m) => m.id !== tempId));
     } catch (err: unknown) {
-      // Keep the user's text on screen instead of losing it — mark the
-      // bubble as failed and let them retry with one click.
       setPendingMessages((prev) =>
         prev.map((m) =>
           m.id === tempId
@@ -383,7 +370,7 @@ export default function SingleWorkspaceDashboardPage() {
       if (isLimitReachedError(err)) {
         setLimitError(err);
       } else {
-        toast.error(getAxiosErrorMessage(err, "Failed to send message"));
+        toast.error(getAxiosErrorMessage(err, tCommon("error")));
       }
     } finally {
       setIsTyping(false);
@@ -397,16 +384,15 @@ export default function SingleWorkspaceDashboardPage() {
     }
   };
 
-  // Opens the SSE job-status stream and keeps jobsById in sync as it updates.
   const startJobStream = (jobId: string) => {
     streamJobStatus(workspaceId!, jobId, (job) => {
       setJobsById((prev) => ({ ...prev, [job.id]: job }));
     })
       .then((finalJob) => {
         if (finalJob?.status === "completed") {
-          toast.success("Generation completed!");
+          toast.success(tCommon("success"));
         } else if (finalJob?.status === "failed") {
-          toast.error(`Generation failed: ${finalJob.error || "unknown error"}`);
+          toast.error(finalJob.error || tCommon("error"));
         }
       })
       .catch((err) => {
@@ -414,8 +400,6 @@ export default function SingleWorkspaceDashboardPage() {
       });
   };
 
-  // Tool execution requires a real, persisted chat thread — create one on
-  // the fly if the user hasn't started a chat yet.
   const ensureActiveChatId = async (): Promise<string> => {
     if (activeChatId) return activeChatId;
     if (chatThreads.length > 0) {
@@ -441,7 +425,7 @@ export default function SingleWorkspaceDashboardPage() {
         id: tempAssistantId,
         chat_id: chatId,
         role: "assistant",
-        content: `Generating your ${TOOL_LABELS[toolType]}…`,
+        content: t("generating_artifact", { type: TOOL_LABELS[toolType] }),
         created_at: new Date().toISOString(),
       },
     ]);
@@ -462,8 +446,6 @@ export default function SingleWorkspaceDashboardPage() {
       startJobStream(job.id);
       queryClient.invalidateQueries({ queryKey: ["workspace-chats", workspaceId] });
     } catch (err) {
-      // Drop the placeholder assistant bubble, but keep the user's request
-      // visible with a retry action instead of losing it.
       setPendingMessages((prev) =>
         prev
           .filter((m) => m.id !== tempAssistantId)
@@ -500,15 +482,12 @@ export default function SingleWorkspaceDashboardPage() {
     try {
       await runTool(toolType, userPrompt);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || "Failed to trigger tool");
+      toast.error(err.response?.data?.error || err.message || tCommon("error"));
     } finally {
       setIsGeneratingTool(false);
     }
   };
 
-  // Shared by regenerate and edit — repoints the existing chat message to
-  // the new job instead of appending a new turn, since neither is a new
-  // question, then starts streaming its progress.
   const applyNewJob = (oldJobId: string, newJob: ToolJob) => {
     queryClient.setQueryData<ProjectMessage[]>(
       ["workspace-messages", workspaceId, newJob.chat_id],
@@ -525,7 +504,7 @@ export default function SingleWorkspaceDashboardPage() {
       const newJob = await regenerateJob(workspaceId!, job.id);
       applyNewJob(job.id, newJob);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || "Failed to regenerate");
+      toast.error(err.response?.data?.error || err.message || tCommon("error"));
     } finally {
       setRegeneratingJobId(null);
     }
@@ -538,14 +517,12 @@ export default function SingleWorkspaceDashboardPage() {
       const newJob = await editJob(workspaceId!, job.id, instruction);
       applyNewJob(job.id, newJob);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || "Failed to apply edit");
+      toast.error(err.response?.data?.error || err.message || tCommon("error"));
     } finally {
       setEditingJobId(null);
     }
   };
 
-  // Hydrate generation jobs for the active chat (and resume streaming any
-  // still in flight) so refreshing the page never loses an artifact.
   useEffect(() => {
     if (!activeChatId) {
       setJobsById({});
@@ -565,7 +542,7 @@ export default function SingleWorkspaceDashboardPage() {
         }
         setJobsById(jobsMap);
       } catch {
-        // Non-fatal — artifacts just won't render until the next successful fetch.
+        // Non-fatal
       }
     })();
     return () => {
@@ -584,7 +561,7 @@ export default function SingleWorkspaceDashboardPage() {
         onClick={() => handleExecuteTool("create_presentation")}
         className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
       >
-        <Presentation className="w-3.5 h-3.5 text-primary" /> Slides
+        <Presentation className="w-3.5 h-3.5 text-primary" /> {t("slides_tool")}
       </Button>
       <Button
         type="button"
@@ -593,7 +570,7 @@ export default function SingleWorkspaceDashboardPage() {
         onClick={() => handleExecuteTool("write_report")}
         className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
       >
-        <FileText className="w-3.5 h-3.5 text-primary" /> Report
+        <FileText className="w-3.5 h-3.5 text-primary" /> {t("report_tool")}
       </Button>
       <Button
         type="button"
@@ -602,7 +579,7 @@ export default function SingleWorkspaceDashboardPage() {
         onClick={() => handleExecuteTool("analyze_data")}
         className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
       >
-        <FileSpreadsheet className="w-3.5 h-3.5 text-primary" /> Spreadsheet
+        <FileSpreadsheet className="w-3.5 h-3.5 text-primary" /> {t("spreadsheet_tool")}
       </Button>
       <Button
         type="button"
@@ -611,7 +588,7 @@ export default function SingleWorkspaceDashboardPage() {
         onClick={() => handleExecuteTool("generate_image")}
         className="h-8 text-[11px] font-semibold gap-1.5 rounded-lg shrink-0"
       >
-        <ImageIcon className="w-3.5 h-3.5 text-primary" /> Image
+        <ImageIcon className="w-3.5 h-3.5 text-primary" /> {t("image_tool")}
       </Button>
     </div>
   );
@@ -621,10 +598,10 @@ export default function SingleWorkspaceDashboardPage() {
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
-          {promptForTool.type === "create_presentation" && "Configure Slides"}
-          {promptForTool.type === "write_report" && "Configure Report"}
-          {promptForTool.type === "analyze_data" && "Configure Spreadsheet"}
-          {promptForTool.type === "generate_image" && "Configure Image"}
+          {promptForTool.type === "create_presentation" && t("configure_slides")}
+          {promptForTool.type === "write_report" && t("configure_report")}
+          {promptForTool.type === "analyze_data" && t("configure_spreadsheet")}
+          {promptForTool.type === "generate_image" && t("configure_image")}
         </span>
         <button
           onClick={() => {
@@ -641,12 +618,12 @@ export default function SingleWorkspaceDashboardPage() {
           autoFocus
           placeholder={
             promptForTool.type === "create_presentation"
-              ? "e.g. 5 slides on our Q3 roadmap"
+              ? t("prompt_slides_placeholder")
               : promptForTool.type === "write_report"
-              ? "e.g. A summary of onboarding metrics and blockers"
+              ? t("prompt_report_placeholder")
               : promptForTool.type === "analyze_data"
-              ? "e.g. Extract cost and revenue figures per quarter"
-              : "e.g. A clean diagram of our support ticket workflow"
+              ? t("prompt_spreadsheet_placeholder")
+              : t("prompt_image_placeholder")
           }
           value={customToolPrompt}
           onChange={(e) => setCustomToolPrompt(e.target.value)}
@@ -664,36 +641,36 @@ export default function SingleWorkspaceDashboardPage() {
           disabled={!customToolPrompt.trim() || isGeneratingTool}
           className="h-9 text-xs font-bold"
         >
-          {isGeneratingTool ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Generate"}
+          {isGeneratingTool ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t("generate_btn")}
         </Button>
       </div>
     </div>
   );
 
   return (
-    <Sidebar>
-      {/* ── Flush Edge-to-Edge Container (No outer margins, no outer padding, no color contrast) ── */}
+    <>
+      {/* ── Flush Edge-to-Edge Container ── */}
       <div className="w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)] h-[calc(100%+2.5rem)] md:h-[calc(100%+3.5rem)] -m-5 md:-m-7 flex flex-col lg:flex-row overflow-hidden bg-card">
         
-        {/* ── LEFT INNER SIDEBAR / DRAWER (Divided by single border-r line) ── */}
+        {/* ── LEFT INNER SIDEBAR / DRAWER ── */}
         <div className="w-full lg:w-80 shrink-0 border-r border-border p-4 pb-3 flex flex-col justify-between h-full overflow-hidden bg-card">
           
-          {/* Top Section: Categorized Chat History ("Today", "Yesterday", "7 days ago") */}
+          {/* Top Section: Categorized Chat History */}
           <div className="flex-1 flex flex-col min-h-0 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border/40 shrink-0">
               <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                 <History className="w-4 h-4 text-primary" />
-                <span>Chat History</span>
+                <span>{t("chat_history")}</span>
               </div>
               <span className="text-[10px] text-muted-foreground font-mono bg-secondary px-2 py-0.5 rounded border">
-                {chatThreads.length} threads
+                {t("threads_count", { count: chatThreads.length })}
               </span>
             </div>
 
             {/* Date Grouped Scrollable History */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {isThreadsLoading ? (
-                <div className="py-6 text-center text-xs text-muted-foreground animate-pulse">Loading history...</div>
+                <div className="py-6 text-center text-xs text-muted-foreground animate-pulse">{t("loading_history")}</div>
               ) : groupedChatHistory.length > 0 ? (
                 groupedChatHistory.map((group) => (
                   <div key={group.label} className="space-y-1.5">
@@ -711,7 +688,7 @@ export default function SingleWorkspaceDashboardPage() {
                               : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
                           }`}
                         >
-                          <span className="truncate pr-2">{thread.title || "Untitled Chat"}</span>
+                          <span className="truncate pr-2">{thread.title || t("untitled_chat")}</span>
                           {activeChatId === thread.id && (
                             <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                           )}
@@ -723,14 +700,14 @@ export default function SingleWorkspaceDashboardPage() {
               ) : (
                 <div className="py-8 text-center space-y-2 border border-dashed border-border/60 rounded-lg p-3">
                   <MessageSquare className="w-6 h-6 text-muted-foreground/40 mx-auto" />
-                  <p className="text-xs text-muted-foreground font-medium">No chat history</p>
-                  <p className="text-[10px] text-muted-foreground/70">Click "+ New Chat" below to start.</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t("no_history_title")}</p>
+                  <p className="text-[10px] text-muted-foreground/70">{t("no_history_desc")}</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Bottom Inner Sidebar Controls (Wireframe: Members, Knowledge Source, New Chat) */}
+          {/* Bottom Inner Sidebar Controls */}
           <div className="mt-auto pt-3 border-t border-border/40 shrink-0 space-y-2">
             
             {/* Members Button */}
@@ -740,7 +717,7 @@ export default function SingleWorkspaceDashboardPage() {
             >
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-500" />
-                <span>Members</span>
+                <span>{t("members_btn")}</span>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground bg-background px-1.5 py-0.5 rounded border">
                 {members.length}
@@ -754,14 +731,14 @@ export default function SingleWorkspaceDashboardPage() {
             >
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-blue-500" />
-                <span>Knowledge Source</span>
+                <span>{t("knowledge_btn")}</span>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground bg-background px-1.5 py-0.5 rounded border">
                 {realSources.length}
               </span>
             </button>
 
-            {/* Wireframe Primary Action: New Chat (Pinned at absolute bottom of drawer) */}
+            {/* New Chat Action */}
             <Button
               size="sm"
               className="w-full h-9 text-xs font-bold gap-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground mt-1"
@@ -772,19 +749,19 @@ export default function SingleWorkspaceDashboardPage() {
               disabled={createChatMutation.isPending}
             >
               <Plus className="w-4 h-4" />
-              New Chat
+              {t("new_chat_btn")}
             </Button>
           </div>
         </div>
 
-        {/* ── RIGHT MAIN CHAT AREA (Seamless continuation, same bg-card background) ── */}
+        {/* ── RIGHT MAIN CHAT AREA ── */}
         <div className="flex-1 flex flex-col h-full bg-card min-w-0 overflow-hidden">
           
           {/* Main Content Area */}
           <div className="flex-1 p-6 overflow-y-auto min-h-0 flex flex-col">
             {displayMessages.length === 0 ? (
               
-              /* ── WELCOME HERO VIEW (Wireframe Sketch with Centered Input) ── */
+              /* ── WELCOME HERO VIEW ── */
               <div className="my-auto flex flex-col items-center justify-center text-center max-w-xl mx-auto w-full space-y-6">
                 
                 {/* Redas Logo & Brand Section */}
@@ -796,12 +773,12 @@ export default function SingleWorkspaceDashboardPage() {
                   
                   {/* Greeting, User-Name */}
                   <h2 className="text-2xl font-extrabold text-foreground font-outfit tracking-tight">
-                    Greeting, {userName}
+                    {t("greeting_user", { userName })}
                   </h2>
                   
                   {/* How can I Assist You */}
                   <p className="text-sm font-semibold text-muted-foreground">
-                    How can I Assist You
+                    {t("assist_heading")}
                   </p>
                 </div>
 
@@ -812,7 +789,7 @@ export default function SingleWorkspaceDashboardPage() {
                       <span>{limitError.error}</span>
                       <Link href="/dashboard/plans">
                         <Button size="sm" className="h-6 text-[10px] font-bold">
-                          Upgrade Plan
+                          {t("upgrade_plan")}
                         </Button>
                       </Link>
                     </div>
@@ -821,7 +798,7 @@ export default function SingleWorkspaceDashboardPage() {
                   <div className="flex items-center gap-2 bg-background border border-input rounded-xl p-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/20">
                     <Input
                       ref={inputRef}
-                      placeholder="Ask anything..."
+                      placeholder={t("ask_placeholder")}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -829,13 +806,12 @@ export default function SingleWorkspaceDashboardPage() {
                       className="text-sm border-0 shadow-none focus-visible:ring-0 h-10 bg-transparent"
                     />
                     
-                    {/* Circular Send Action Button (Wireframe Circle Button 'A') */}
                     <Button
                       size="icon"
                       onClick={() => void handleSend()}
                       disabled={!input.trim() || isTyping}
                       className="h-9 w-9 rounded-full font-bold text-xs shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
-                      title="Send Message"
+                      title={t("send_title")}
                     >
                       <Send className="w-4 h-4" />
                     </Button>
@@ -877,7 +853,7 @@ export default function SingleWorkspaceDashboardPage() {
                       ) : isFailed ? (
                         <button
                           onClick={() => msg._retry?.()}
-                          title="Failed to send — click to retry"
+                          title={t("retry_tooltip")}
                           className="max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed text-left bg-destructive/10 border border-destructive/30 text-destructive font-medium rounded-tr-none hover:bg-destructive/15 transition-colors flex items-center gap-2"
                         >
                           <RotateCcw className="w-3.5 h-3.5 shrink-0" />
@@ -930,7 +906,7 @@ export default function SingleWorkspaceDashboardPage() {
                   <span>{limitError.error}</span>
                   <Link href="/dashboard/plans">
                     <Button size="sm" className="h-6 text-[10px] font-bold">
-                      Upgrade Plan
+                      {t("upgrade_plan")}
                     </Button>
                   </Link>
                 </div>
@@ -942,7 +918,7 @@ export default function SingleWorkspaceDashboardPage() {
               <div className="flex items-center gap-2 bg-background border border-input rounded-xl p-1.5 shadow-2xs focus-within:ring-2 focus-within:ring-primary/20">
                 <Input
                   ref={inputRef}
-                  placeholder="Ask a question or type a message..."
+                  placeholder={t("ask_active_placeholder")}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -955,7 +931,7 @@ export default function SingleWorkspaceDashboardPage() {
                   onClick={() => void handleSend()}
                   disabled={!input.trim() || isTyping}
                   className="h-9 w-9 rounded-full font-bold text-xs shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
-                  title="Send Message"
+                  title={t("send_title")}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -971,14 +947,14 @@ export default function SingleWorkspaceDashboardPage() {
           <DialogHeader>
             <DialogTitle className="font-outfit text-lg flex items-center justify-between pr-4">
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" /> Workspace Members
+                <Users className="w-5 h-5 text-primary" /> {t("members_modal_title")}
               </div>
               <span className="text-xs font-mono bg-secondary px-2 py-0.5 rounded border">
-                {members.length} Members
+                {t("members_count", { count: members.length })}
               </span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Active team members with access to this workspace.
+              {t("members_modal_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -995,7 +971,7 @@ export default function SingleWorkspaceDashboardPage() {
                   </div>
                 </div>
                 <span className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  Active
+                  {t("active_badge")}
                 </span>
               </div>
             ))}
@@ -1011,11 +987,11 @@ export default function SingleWorkspaceDashboardPage() {
                 }}
                 className="text-xs h-8 font-semibold gap-1.5"
               >
-                <UserPlus className="w-3.5 h-3.5" /> Invite Member
+                <UserPlus className="w-3.5 h-3.5" /> {t("invite_member_btn")}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => setIsMembersModalOpen(false)} className="text-xs h-8">
-              Close
+              {t("close_btn")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1027,14 +1003,14 @@ export default function SingleWorkspaceDashboardPage() {
           <DialogHeader>
             <DialogTitle className="font-outfit text-lg flex items-center justify-between pr-4">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary" /> Knowledge Sources
+                <BookOpen className="w-5 h-5 text-primary" /> {t("knowledge_modal_title")}
               </div>
               <span className="text-xs font-mono bg-secondary px-2 py-0.5 rounded border">
-                {realSources.length} Indexed
+                {t("indexed_count", { count: realSources.length })}
               </span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Ingest PDF files, website URLs, or text guidelines into workspace.
+              {t("knowledge_modal_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1051,7 +1027,7 @@ export default function SingleWorkspaceDashboardPage() {
                     <span className="font-medium text-foreground truncate" title={s.source}>{s.source}</span>
                   </div>
                   <span className="text-[9px] font-mono text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
-                    {s.chunk_count || 0} chunks
+                    {t("chunks_count", { count: s.chunk_count || 0 })}
                   </span>
                 </div>
               ))}
@@ -1066,7 +1042,7 @@ export default function SingleWorkspaceDashboardPage() {
                 className="h-8 text-xs gap-1.5"
                 onClick={() => setSourceType("url")}
               >
-                <Globe className="w-3.5 h-3.5" /> Web URL
+                <Globe className="w-3.5 h-3.5" /> {t("web_url_tab")}
               </Button>
               <Button
                 size="sm"
@@ -1074,7 +1050,7 @@ export default function SingleWorkspaceDashboardPage() {
                 className="h-8 text-xs gap-1.5"
                 onClick={() => setSourceType("pdf")}
               >
-                <FileText className="w-3.5 h-3.5" /> PDF File
+                <FileText className="w-3.5 h-3.5" /> {t("pdf_file_tab")}
               </Button>
               <Button
                 size="sm"
@@ -1082,17 +1058,17 @@ export default function SingleWorkspaceDashboardPage() {
                 className="h-8 text-xs gap-1.5"
                 onClick={() => setSourceType("text")}
               >
-                <FileUp className="w-3.5 h-3.5" /> Text / FAQ
+                <FileUp className="w-3.5 h-3.5" /> {t("text_tab")}
               </Button>
             </div>
 
             <form onSubmit={handleAddSource} className="space-y-3">
               {sourceType === "url" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">Website / Documentation URL</label>
+                  <label className="text-xs font-medium text-foreground">{t("url_input_label")}</label>
                   <Input
                     type="url"
-                    placeholder="https://docs.company.com/workspace-guide"
+                    placeholder={t("url_input_placeholder")}
                     value={sourceUrl}
                     onChange={(e) => setSourceUrl(e.target.value)}
                     className="text-xs h-9"
@@ -1103,7 +1079,7 @@ export default function SingleWorkspaceDashboardPage() {
 
               {sourceType === "pdf" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">Upload PDF File</label>
+                  <label className="text-xs font-medium text-foreground">{t("upload_pdf_label")}</label>
                   <Input
                     type="file"
                     accept=".pdf"
@@ -1116,9 +1092,9 @@ export default function SingleWorkspaceDashboardPage() {
 
               {sourceType === "text" && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">Text / Guidelines Snippet</label>
+                  <label className="text-xs font-medium text-foreground">{t("text_input_label")}</label>
                   <textarea
-                    placeholder="Paste text guidelines, company FAQs, or knowledge snippet..."
+                    placeholder={t("text_input_placeholder")}
                     value={sourceText}
                     onChange={(e) => setSourceText(e.target.value)}
                     className="w-full text-xs p-2.5 rounded-md border border-input bg-background min-h-25 focus:outline-hidden"
@@ -1129,7 +1105,7 @@ export default function SingleWorkspaceDashboardPage() {
 
               <Button type="submit" size="sm" disabled={isIngesting} className="w-full h-8 text-xs font-semibold gap-1.5">
                 <Upload className="w-3.5 h-3.5" />
-                {isIngesting ? "Ingesting Knowledge..." : "Ingest Source into Workspace"}
+                {isIngesting ? t("ingesting_btn") : t("ingest_btn")}
               </Button>
             </form>
           </div>
@@ -1140,9 +1116,9 @@ export default function SingleWorkspaceDashboardPage() {
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-outfit text-lg">Invite Member to Workspace</DialogTitle>
+            <DialogTitle className="font-outfit text-lg">{t("invite_modal_title")}</DialogTitle>
             <DialogDescription className="text-xs">
-              Invite a colleague to access and chat in this workspace.
+              {t("invite_modal_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1155,10 +1131,10 @@ export default function SingleWorkspaceDashboardPage() {
               )}
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Email Address</label>
+                <label className="text-xs font-medium text-foreground">{t("email_label")}</label>
                 <Input
                   type="email"
-                  placeholder="colleague@company.com"
+                  placeholder={t("email_placeholder")}
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="text-xs h-9"
@@ -1175,7 +1151,7 @@ export default function SingleWorkspaceDashboardPage() {
                   onClick={() => setIsInviteModalOpen(false)}
                   className="text-xs h-8"
                 >
-                  Cancel
+                  {t("cancel_btn")}
                 </Button>
                 <Button
                   type="submit"
@@ -1183,18 +1159,18 @@ export default function SingleWorkspaceDashboardPage() {
                   disabled={!inviteEmail.trim() || inviteMutation.isPending}
                   className="text-xs h-8 font-semibold"
                 >
-                  {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
+                  {inviteMutation.isPending ? t("sending_invite_btn") : t("send_invite_btn")}
                 </Button>
               </DialogFooter>
             </form>
           ) : (
             <div className="space-y-4 py-3">
               <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                Invitation created for <strong>{inviteEmail}</strong>
+                {t("invite_created")} <strong>{inviteEmail}</strong>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-foreground">Direct Invitation Link</label>
+                <label className="text-xs font-medium text-foreground">{t("direct_link_label")}</label>
                 <div className="flex gap-2">
                   <Input
                     readOnly
@@ -1208,7 +1184,7 @@ export default function SingleWorkspaceDashboardPage() {
                     onClick={() => copyInviteLink(createdInviteToken)}
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? "Copied" : "Copy Link"}
+                    {copied ? t("copied") : t("copy_link")}
                   </Button>
                 </div>
               </div>
@@ -1222,13 +1198,13 @@ export default function SingleWorkspaceDashboardPage() {
                     setCreatedInviteToken(null);
                   }}
                 >
-                  Done
+                  {t("done_btn")}
                 </Button>
               </DialogFooter>
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </Sidebar>
+    </>
   );
 }

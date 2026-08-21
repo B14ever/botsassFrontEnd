@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Slide = { title: string; bullets: string[] };
 type SlidesContent = { title?: string; subtitle?: string; slides?: Slide[] };
 
 export default function SlidesPreview({ content }: { content: SlidesContent }) {
+  const t = useTranslations("workspace_detail");
   const slides = content.slides || [];
   const [index, setIndex] = useState(0);
 
   if (slides.length === 0) {
     return (
-      <p className="text-muted-foreground text-[11px] italic">Outline pending…</p>
+      <p className="text-muted-foreground text-[11px] italic">{t("preview_outline_pending")}</p>
     );
   }
 
-  // One large slide at a time, navigable — mirrors the
-  // cover + content-slide styling of the actual generated PPTX.
   const total = slides.length + 1; // +1 for the title/cover slide
   const clampedIndex = Math.min(index, total - 1);
   const isCover = clampedIndex === 0;
@@ -31,14 +31,14 @@ export default function SlidesPreview({ content }: { content: SlidesContent }) {
         {isCover ? (
           <div className="w-full h-full bg-linear-to-br from-[#1F3A56] to-[#101B2B] flex flex-col items-center justify-center text-center px-10">
             <h2 className="text-white text-2xl md:text-3xl font-black font-outfit leading-tight">
-              {content.title || "Untitled Presentation"}
+              {content.title || t("preview_untitled_presentation")}
             </h2>
             {content.subtitle && (
               <p className="text-[#BDC3C7] text-sm md:text-base italic mt-3">{content.subtitle}</p>
             )}
           </div>
         ) : (
-            <div className="w-full h-full bg-linear-to-br from-white to-[#F0F3F4] dark:from-secondary dark:to-secondary/70 flex flex-col px-8 md:px-12 py-8 md:py-10">
+          <div className="w-full h-full bg-linear-to-br from-white to-[#F0F3F4] dark:from-secondary dark:to-secondary/70 flex flex-col px-8 md:px-12 py-8 md:py-10">
             <h3 className="text-[#1F3A56] dark:text-primary text-lg md:text-2xl font-black font-outfit mb-4 md:mb-6 shrink-0">
               {slide?.title}
             </h3>
@@ -81,7 +81,7 @@ export default function SlidesPreview({ content }: { content: SlidesContent }) {
         ))}
       </div>
       <p className="text-center text-muted-foreground text-[11px] font-medium">
-        {isCover ? "Cover" : `Slide ${clampedIndex} of ${slides.length}`}
+        {isCover ? t("preview_cover") : t("preview_slide_of", { current: clampedIndex, total: slides.length })}
       </p>
     </div>
   );

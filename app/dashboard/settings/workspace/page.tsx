@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Building2, Shield, Trash2, UserCheck, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import Sidebar from '@/components/shared/Sidebar';
 import RoleGuard from '@/components/shared/RoleGuard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,16 +31,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-
-function getHumanErrorMessage(e: any): string {
-  const msg = e?.message || '';
-  if (msg.includes('403') || msg.includes('forbidden') || msg.includes('permission')) {
-    return 'You do not have permission to modify this workspace settings.';
-  }
-  return 'We could not update the workspace settings. Please try again.';
-}
+import { useTranslations } from 'next-intl';
 
 export default function WorkspaceSettingsPage() {
+  const t = useTranslations('workspace_settings');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const queryClient = useQueryClient();
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
@@ -78,68 +72,67 @@ export default function WorkspaceSettingsPage() {
   const updateMutation = useMutation({
     mutationFn: () => updateWorkspace(activeWorkspaceId!, wsName.trim(), avatarUrl.trim()),
     onSuccess: () => {
-      toast.success('Workspace settings updated');
+      toast.success(tCommon('saved'));
       queryClient.invalidateQueries({ queryKey: ['workspace', activeWorkspaceId] });
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     },
-    onError: (e: Error) => toast.error(getHumanErrorMessage(e)),
+    onError: (e: any) => toast.error(e?.message || tCommon('error')),
   });
 
   const transferMutation = useMutation({
     mutationFn: () => transferWorkspaceOwnership(activeWorkspaceId!, selectedNewOwner),
     onSuccess: () => {
-      toast.success('Workspace ownership transferred');
+      toast.success(tCommon('success'));
       setIsTransferOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', activeWorkspaceId] });
       queryClient.invalidateQueries({ queryKey: ['workspace-members', activeWorkspaceId] });
     },
-    onError: (e: Error) => toast.error(getHumanErrorMessage(e)),
+    onError: (e: any) => toast.error(e?.message || tCommon('error')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => softDeleteWorkspace(activeWorkspaceId!),
     onSuccess: () => {
-      toast.success('Workspace deleted');
+      toast.success(tCommon('success'));
       setIsDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       router.push('/dashboard');
     },
-    onError: (e: Error) => toast.error(getHumanErrorMessage(e)),
+    onError: (e: any) => toast.error(e?.message || tCommon('error')),
   });
 
   const eligibleNewOwners = members.filter(m => m.user_id !== currentUser?.id && m.status === 'active');
 
   return (
     <RoleGuard requiredPermission="manage_workspace" requiredPermissionLabel="Manage Workspace">
-      <Sidebar>
       <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Streamlined Header */}
         <div className="pb-4 border-b border-border/40">
           <h1 className="text-2xl font-bold tracking-tight text-foreground font-outfit">
-            Workspace Settings
+            {t('title')}
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Configure identity, ownership transfer, and workspace lifecycle.
+            {t('subtitle')}
           </p>
         </div>
 
         {/* General Settings */}
         <div className="border border-border/80 bg-card rounded-lg p-5 shadow-xs space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">General Configuration</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('general_config')}</h2>
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Workspace Name</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('ws_name')}</label>
               <Input
                 value={wsName}
                 onChange={(e) => setWsName(e.target.value)}
-                placeholder="Workspace Name"
+                placeholder={t('ws_name')}
                 className="text-xs h-9 bg-background"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Workspace Slug</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('ws_slug')}</label>
               <Input
                 value={workspace?.slug || ''}
                 disabled
@@ -153,7 +146,7 @@ export default function WorkspaceSettingsPage() {
               size="sm"
               className="mt-2"
             >
-              {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
+              {updateMutation.isPending ? t('saving') : t('save_settings')}
             </Button>
           </div>
         </div>
@@ -163,16 +156,16 @@ export default function WorkspaceSettingsPage() {
           <div className="border border-border/80 bg-card rounded-lg p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
               <UserCheck className="w-4 h-4 text-amber-500" />
-              <span>Transfer Workspace Ownership</span>
+              <span>{t('transfer_title')}</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Transfer ownership to another active team member. You will become an Admin in this workspace.
+              {t('transfer_desc')}
             </p>
 
             <div className="flex items-center gap-3 pt-1">
               <Select value={selectedNewOwner} onValueChange={setSelectedNewOwner}>
                 <SelectTrigger className="h-9 text-xs font-medium bg-background flex-1">
-                  <SelectValue placeholder="Select new workspace owner..." />
+                  <SelectValue placeholder={t('select_new_owner')} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border border-border">
                   {eligibleNewOwners.map((m) => (
@@ -190,7 +183,7 @@ export default function WorkspaceSettingsPage() {
                 onClick={() => setIsTransferOpen(true)}
                 className="h-9"
               >
-                Transfer Ownership
+                {t('transfer_btn')}
               </Button>
             </div>
           </div>
@@ -201,10 +194,10 @@ export default function WorkspaceSettingsPage() {
           <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
               <AlertTriangle className="w-4 h-4" />
-              <span>Danger Zone: Delete Workspace</span>
+              <span>{t('danger_title')}</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Soft-delete this workspace. All AI agents, projects, and knowledge sources will be archived.
+              {t('danger_desc')}
             </p>
 
             <Button
@@ -213,7 +206,7 @@ export default function WorkspaceSettingsPage() {
               onClick={() => setIsDeleteOpen(true)}
               className="gap-2 h-9"
             >
-              <Trash2 className="w-3.5 h-3.5" /> Delete Workspace
+              <Trash2 className="w-3.5 h-3.5" /> {t('delete_btn')}
             </Button>
           </div>
         )}
@@ -222,19 +215,18 @@ export default function WorkspaceSettingsPage() {
         <AlertDialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Ownership Transfer</AlertDialogTitle>
+              <AlertDialogTitle>{t('confirm_transfer_title')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to transfer ownership of <strong className="text-foreground">{workspace?.name}</strong>?
-                You will be demoted to an Admin.
+                {t('confirm_transfer_desc', { name: workspace?.name || '' })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => transferMutation.mutate()}
                 disabled={transferMutation.isPending}
               >
-                Confirm Transfer
+                {t('confirm_transfer_btn')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -244,26 +236,24 @@ export default function WorkspaceSettingsPage() {
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-destructive">Delete Workspace</AlertDialogTitle>
+              <AlertDialogTitle className="text-destructive">{t('delete_modal_title')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action will archive workspace <strong className="text-foreground">{workspace?.name}</strong>.
-                Members will lose active access immediately.
+                {t('delete_modal_desc', { name: workspace?.name || '' })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Keep Workspace</AlertDialogCancel>
+              <AlertDialogCancel>{t('keep_ws')}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-white hover:bg-destructive/90"
                 onClick={() => deleteMutation.mutate()}
                 disabled={deleteMutation.isPending}
               >
-                Delete Workspace
+                {t('delete_btn')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </Sidebar>
-  </RoleGuard>
-);
+    </RoleGuard>
+  );
 }

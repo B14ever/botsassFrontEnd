@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useWorkspaceStore } from "@/store/workspaceStore";
 import api from "@/lib/api";
 import { getAxiosErrorMessage } from "@/lib/api/errors";
+import { Spokes } from "@/components/loading-ui/spokes";
 
 export default function InviteAcceptPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -105,7 +106,7 @@ export default function InviteAcceptPage({ params }: { params: Promise<{ token: 
         {/* Loading */}
         {isLoading && (
           <div className="space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
+            <Spokes className="size-16 mx-auto" />
             <p className="text-sm text-muted-foreground">Loading invitation details...</p>
           </div>
         )}

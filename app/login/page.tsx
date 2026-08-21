@@ -8,8 +8,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { Spokes } from "@/components/loading-ui/spokes";
+import { useTranslations } from "next-intl";
 
 function LoginForm() {
+  const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -48,14 +51,14 @@ function LoginForm() {
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground ml-1">Email Address</label>
+            <label className="text-sm font-medium text-muted-foreground ml-1">{t("email")}</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
               <Input
                 type="email"
                 required
                 className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground/50"
-                placeholder="name@example.com"
+                placeholder={t("email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -63,14 +66,14 @@ function LoginForm() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground ml-1">Password</label>
+            <label className="text-sm font-medium text-muted-foreground ml-1">{t("password")}</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
               <Input
                 type={showPassword ? "text" : "password"}
                 required
                 className="w-full bg-secondary border border-border rounded-md h-12 pl-11 pr-11 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground/50"
-                placeholder="Password"
+                placeholder={t("password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -97,7 +100,7 @@ function LoginForm() {
             <Loader2 className="animate-spin w-5 h-5" />
           ) : (
             <>
-              Sign in <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              {t("sign_in")} <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </>
           )}
         </Button>
@@ -106,7 +109,7 @@ function LoginForm() {
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border"></span></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
         </div>
       </div>
 
@@ -121,14 +124,14 @@ function LoginForm() {
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </svg>
-        Sign in with Google
+        {t("google_sign_in")}
       </Button>
 
       <div className="flex justify-center pt-2">
         <p className="text-muted-foreground text-sm">
-          Don&apos;t have an account?{" "}
+          {t("no_account")}{" "}
           <Link href="/register" className="text-primary hover:underline font-semibold ml-1 transition-all">
-            Create one
+            {t("sign_up")}
           </Link>
         </p>
       </div>
@@ -137,12 +140,14 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
+
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your Redas workspace"
+      title={t("login_title")}
+      subtitle={t("login_subtitle")}
     >
-      <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />}>
+      <Suspense fallback={<Spokes className="size-16 mx-auto" />}>
         <LoginForm />
       </Suspense>
     </AuthLayout>

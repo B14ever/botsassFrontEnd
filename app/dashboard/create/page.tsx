@@ -15,7 +15,6 @@ import {
   Upload,
   Zap,
 } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -217,8 +216,7 @@ export default function CreateBotPage() {
   };
 
   return (
-    <Sidebar>
-      <div className="max-w-5xl mx-auto space-y-10 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-5xl mx-auto space-y-10 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
@@ -445,8 +443,7 @@ export default function CreateBotPage() {
           </AnimatePresence>
         </div>
       </div>
-    </Sidebar>
-  );
+    );
 }
 
 function StepItem({ active, completed, stepNumber, title, description }: { active: boolean; completed: boolean; stepNumber: number; title: string; description: string }) {

@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 type SpreadsheetRow = { cells: (string | number)[] };
 type Sheet = { name: string; headers: string[]; rows: SpreadsheetRow[] };
 type SpreadsheetContent = { sheets?: Sheet[] };
 
 export default function SpreadsheetPreview({ content }: { content: SpreadsheetContent }) {
+  const t = useTranslations("workspace_detail");
   const sheets = content.sheets || [];
   const [activeSheet, setActiveSheet] = useState(0);
 
   if (sheets.length === 0) {
     return (
-      <p className="text-muted-foreground text-[11px] italic">Data extraction pending…</p>
+      <p className="text-muted-foreground text-[11px] italic">{t("preview_data_pending")}</p>
     );
   }
 
@@ -33,7 +35,7 @@ export default function SpreadsheetPreview({ content }: { content: SpreadsheetCo
                   : "text-muted-foreground hover:bg-secondary"
               }`}
             >
-              {s.name || `Sheet ${i + 1}`}
+              {s.name || t("preview_sheet", { number: i + 1 })}
             </button>
           ))}
         </div>

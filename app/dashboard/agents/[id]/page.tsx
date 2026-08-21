@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSession } from "next-auth/react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { Spokes } from "@/components/loading-ui/spokes";
 import {
   Bot,
   Palette,
@@ -37,10 +38,9 @@ import {
   Eye,
   Trash2,
   BarChart3,
-  Activity
+  Activity,
 } from "lucide-react";
 import Link from "next/link";
-import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import api from "@/lib/api";
 import { getAxiosErrorMessage } from "@/lib/api/errors";
+import { useTranslations } from "next-intl";
 
 type Message = {
   role: "user" | "assistant";
@@ -72,6 +73,8 @@ type KnowledgeResponse = {
 };
 
 export default function AgentWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("agent_detail");
+  const tCommon = useTranslations("common");
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,7 +149,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
     description: "",
     avatar_url: "",
     primary_color: "#10b981",
-    welcome_message: "Hello! How can I help you today?"
+    welcome_message: t("default_welcome")
   });
 
   useEffect(() => {
@@ -156,10 +159,10 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
         description: bot.description || "",
         avatar_url: bot.avatar_url || "",
         primary_color: bot.primary_color || "#10b981",
-        welcome_message: bot.welcome_message || "Hello! How can I help you today?"
+        welcome_message: bot.welcome_message || t("default_welcome")
       });
     }
-  }, [bot]);
+  }, [bot, t]);
 
   // Ingestion State
   const [ingesting, setIngesting] = useState(false);
@@ -190,10 +193,10 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     if (activeTab === "preview-widget" && messages.length === 0 && bot) {
       setMessages([
-        { role: "assistant", content: formData.welcome_message }
+        { role: "assistant", content: formData.welcome_message || t("default_welcome") }
       ]);
     }
-  }, [activeTab, bot]);
+  }, [activeTab, bot, formData.welcome_message, t]);
 
   // Mutations
   const updateBotMutation = useMutation({
@@ -201,11 +204,11 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
       return api.patch(`/bots/${id}`, data);
     },
     onSuccess: () => {
-      toast.success("Agent settings updated successfully!");
+      toast.success(t("save_success"));
       queryClient.invalidateQueries({ queryKey: ["bot", id] });
     },
     onError: () => {
-      toast.error("Failed to update agent settings");
+      toast.error(t("save_error"));
     }
   });
 
@@ -224,7 +227,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(embedCode);
-      toast.success("Code copied to clipboard!");
+      toast.success(t("copied"));
     } catch {
       const el = document.createElement("textarea");
       el.value = embedCode;
@@ -232,7 +235,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
       el.select();
       document.execCommand("copy");
       document.body.removeChild(el);
-      toast.success("Code copied!");
+      toast.success(t("copied"));
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -241,7 +244,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
   // Telegram Handlers
   const handleConnectTelegram = async () => {
     if (!telegramToken.trim()) {
-      toast.error("Please enter a Telegram Bot Token");
+      toast.error(t("telegram_token_label"));
       return;
     }
     setIsConnectingTelegram(true);
@@ -250,11 +253,11 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
         type: "telegram",
         config: { bot_token: telegramToken.trim() }
       });
-      toast.success("Telegram channel connected successfully!");
+      toast.success(t("telegram_success"));
       setTelegramToken("");
       refetchChannels();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || "Failed to connect Telegram");
+      toast.error(err.response?.data?.error || err.message || tCommon("error"));
     } finally {
       setIsConnectingTelegram(false);
     }
@@ -263,7 +266,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
   // WhatsApp Handlers
   const handleConnectWhatsApp = async () => {
     if (!whatsappPhoneId.trim() || !whatsappVerifyToken.trim() || !whatsappAccessToken.trim()) {
-      toast.error("Please fill in all WhatsApp fields");
+      toast.error(tCommon("error"));
       return;
     }
     setIsConnectingWhatsApp(true);
@@ -276,26 +279,26 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
           access_token: whatsappAccessToken.trim()
         }
       });
-      toast.success("WhatsApp channel connected successfully!");
+      toast.success(t("whatsapp_success"));
       setWhatsappPhoneId("");
       setWhatsappVerifyToken("");
       setWhatsappAccessToken("");
       refetchChannels();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.message || "Failed to connect WhatsApp");
+      toast.error(err.response?.data?.error || err.message || tCommon("error"));
     } finally {
       setIsConnectingWhatsApp(false);
     }
   };
 
   const handleDisconnectChannel = async (channelId: string) => {
-    if (!confirm("Are you sure you want to disconnect this channel? Webhook connections will be removed.")) return;
+    if (!confirm(t("disconnect_confirm"))) return;
     try {
       await api.delete(`/bots/${id}/channels/${channelId}`);
-      toast.success("Channel disconnected successfully");
+      toast.success(t("channel_disconnected"));
       refetchChannels();
     } catch (err: any) {
-      toast.error(err.message || "Failed to disconnect channel");
+      toast.error(err.message || tCommon("error"));
     }
   };
 
@@ -306,11 +309,11 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
     setIngestionError(null);
     try {
       await api.post("/ingest/url", { bot_id: id, source: url, content_rights_confirmed: rightsConfirmed });
-      toast.success("Website import started!");
+      toast.success(t("ingest_url_success"));
       setUrl("");
       setTimeout(() => refetchKnowledge(), 3000);
     } catch (error: unknown) {
-      const errMsg = getAxiosErrorMessage(error, "Ingestion failed");
+      const errMsg = getAxiosErrorMessage(error, t("ingest_issue"));
       setIngestionError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -323,20 +326,20 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
     if (!pdfFile) return;
     setIngesting(true);
     setIngestionError(null);
-    const formData = new FormData();
-    formData.append("file", pdfFile);
-    formData.append("bot_id", id);
-    formData.append("content_rights_confirmed", String(rightsConfirmed));
+    const form = new FormData();
+    form.append("file", pdfFile);
+    form.append("bot_id", id);
+    form.append("content_rights_confirmed", String(rightsConfirmed));
 
     try {
-      await api.post("/ingest/pdf", formData, {
+      await api.post("/ingest/pdf", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("PDF import started!");
+      toast.success(t("ingest_pdf_success"));
       setPdfFile(null);
       setTimeout(() => refetchKnowledge(), 3000);
     } catch (error: unknown) {
-      const errMsg = getAxiosErrorMessage(error, "Ingestion failed");
+      const errMsg = getAxiosErrorMessage(error, t("ingest_issue"));
       setIngestionError(errMsg);
       toast.error(errMsg);
     } finally {
@@ -371,7 +374,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
       if (!response.ok) {
         const errorPayload = (await response.json()) as Record<string, unknown>;
-        throw new Error((errorPayload.error as string) || "Failed to connect to agent");
+        throw new Error((errorPayload.error as string) || tCommon("error"));
       }
 
       const reader = response.body?.getReader();
@@ -397,7 +400,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
         }
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to connect to agent.";
+      const message = error instanceof Error ? error.message : tCommon("error");
       toast.error(message);
     } finally {
       setIsTyping(false);
@@ -406,26 +409,23 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
   if (botLoading) {
     return (
-      <Sidebar>
-        <div className="flex items-center justify-center h-[70vh]">
-          <RefreshCcw className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      </Sidebar>
+      <div className="flex items-center justify-center h-[70vh]">
+        <Spokes className="size-16" />
+      </div>
     );
   }
 
   return (
-    <Sidebar>
-      {/* ── Flush Edge-to-Edge Container (Cancels default Sidebar card border & padding) ── */}
-      <div className="w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)] h-[calc(100%+2.5rem)] md:h-[calc(100%+3.5rem)] -m-5 md:-m-7 flex flex-col lg:flex-row overflow-hidden bg-card animate-in fade-in duration-300">
+    /* ── Flush Edge-to-Edge Container (Cancels default Sidebar card border & padding) ── */
+    <div className="w-[calc(100%+2.5rem)] md:w-[calc(100%+3.5rem)] h-[calc(100%+2.5rem)] md:h-[calc(100%+3.5rem)] -m-5 md:-m-7 flex flex-col lg:flex-row overflow-hidden bg-card animate-in fade-in duration-300">
         
-        {/* LEFT PANEL: Menu & Navigation (Clean sidebar nav with border-r, p-5, matching workspace layout) */}
+        {/* LEFT PANEL: Menu & Navigation */}
         <div className="w-full lg:w-64 shrink-0 border-r border-border/40 p-5 flex flex-col h-full overflow-y-auto bg-card space-y-6">
           
-          {/* Bot Name Title Block (Actual bot name only, no label) */}
+          {/* Bot Name Title Block */}
           <div className="pb-4 border-b border-border/40">
-            <h2 className="text-base font-bold text-foreground leading-tight  truncate">
-              {formData.name || bot?.name || "AI Agent"}
+            <h2 className="text-base font-bold text-foreground leading-tight truncate">
+              {formData.name || bot?.name || t("ai_assistant")}
             </h2>
           </div>
 
@@ -433,7 +433,9 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
           <nav className="space-y-4">
             {/* General Group */}
             <div className="space-y-1">
-              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">General</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">
+                {t("general_group")}
+              </span>
               <button
                 onClick={() => handleTabChange("basic-info")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
@@ -442,8 +444,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <User className="w-4 h-4" />
-                Basic Info
+                <User className="w-4 h-4 shrink-0" />
+                {t("tab_basic_info")}
               </button>
               <button
                 onClick={() => handleTabChange("knowledge")}
@@ -453,8 +455,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                Knowledge Info
+                <FileText className="w-4 h-4 shrink-0" />
+                {t("tab_knowledge")}
               </button>
               <button
                 onClick={() => handleTabChange("usage-metrics")}
@@ -464,14 +466,16 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <BarChart3 className="w-4 h-4" />
-                Usage Metrics
+                <BarChart3 className="w-4 h-4 shrink-0" />
+                {t("tab_usage_metrics")}
               </button>
             </div>
 
             {/* Integrations Group */}
             <div className="space-y-1">
-              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">Integration</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">
+                {t("integration_group")}
+              </span>
               <button
                 onClick={() => handleTabChange("integration-widget")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
@@ -480,8 +484,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <MessageSquareCode className="w-4 h-4" />
-                Chat Widget
+                <MessageSquareCode className="w-4 h-4 shrink-0" />
+                {t("tab_chat_widget")}
               </button>
               <button
                 onClick={() => handleTabChange("integration-telegram")}
@@ -492,8 +496,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <SendIcon className="w-4 h-4" />
-                  Telegram
+                  <SendIcon className="w-4 h-4 shrink-0" />
+                  {t("tab_telegram")}
                 </span>
                 {channels.some(c => c.type === 'telegram') && (
                   <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'integration-telegram' ? 'bg-primary-foreground' : 'bg-green-500 animate-pulse'}`} />
@@ -508,8 +512,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <MessageSquare className="w-4 h-4" />
-                  WhatsApp
+                  <MessageSquare className="w-4 h-4 shrink-0" />
+                  {t("tab_whatsapp")}
                 </span>
                 {channels.some(c => c.type === 'whatsapp') && (
                   <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'integration-whatsapp' ? 'bg-primary-foreground' : 'bg-green-500 animate-pulse'}`} />
@@ -519,7 +523,9 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
             {/* Appearance Group */}
             <div className="space-y-1">
-              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">Preview</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 block px-2 pb-1">
+                {t("preview_group")}
+              </span>
               <button
                 onClick={() => handleTabChange("preview-theme")}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
@@ -528,8 +534,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <Palette className="w-4 h-4" />
-                Theme Settings
+                <Palette className="w-4 h-4 shrink-0" />
+                {t("tab_theme_settings")}
               </button>
               <button
                 onClick={() => handleTabChange("preview-widget")}
@@ -539,15 +545,15 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
-                <Eye className="w-4 h-4" />
-                Preview Widget
+                <Eye className="w-4 h-4 shrink-0" />
+                {t("tab_preview_widget")}
               </button>
             </div>
           </nav>
         </div>
 
-        {/* RIGHT PANEL: Tab Contents (Clean borderless layout, p-5 md:p-7, scrollable) */}
-        <div className="flex-1 p-5 md:p-7 h-full overflow-y-auto">
+        {/* RIGHT PANEL: Tab Contents */}
+        <div className={`flex-1 h-full flex flex-col ${activeTab === "preview-widget" ? "p-0 overflow-hidden" : "p-5 md:p-7 overflow-y-auto"}`}>
           
           <AnimatePresence mode="wait">
             <motion.div
@@ -556,37 +562,37 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="space-y-6"
+              className={activeTab === "preview-widget" ? "h-full flex flex-col flex-1 min-h-0" : "space-y-6"}
             >
               
               {/* TAB 1: BASIC INFO */}
               {activeTab === "basic-info" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Agent Profile</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Configure the basic identity of your AI assistant.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("profile_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("profile_desc")}</p>
                   </div>
                   <form onSubmit={handleProfileSubmit} className="space-y-6">
                     <div className="space-y-4 max-w-2xl">
                       <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">Agent Name</Label>
+                        <Label className="text-xs font-medium text-muted-foreground">{t("agent_name")}</Label>
                         <Input 
                           value={formData.name}
                           onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          placeholder="e.g. Support Assistant"
+                          placeholder={t("agent_name_placeholder")}
                           className="bg-background"
                           required
                         />
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">Avatar Image URL</Label>
+                        <Label className="text-xs font-medium text-muted-foreground">{t("avatar_url")}</Label>
                         <div className="flex gap-4">
                           <div className="flex-1">
                             <Input 
                               value={formData.avatar_url}
                               onChange={(e) => setFormData({...formData, avatar_url: e.target.value})}
-                              placeholder="https://example.com/bot-avatar.png"
+                              placeholder={t("avatar_url_placeholder")}
                               className="bg-background"
                             />
                           </div>
@@ -601,11 +607,11 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">Internal Description</Label>
+                        <Label className="text-xs font-medium text-muted-foreground">{t("internal_desc")}</Label>
                         <textarea 
                           value={formData.description}
                           onChange={(e) => setFormData({...formData, description: e.target.value})}
-                          placeholder="What is the objective or grounding context of this bot?"
+                          placeholder={t("internal_desc_placeholder")}
                           className="w-full bg-secondary/40 border border-border rounded-md p-4 text-xs text-foreground placeholder:text-muted-foreground/50 h-28 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all leading-relaxed"
                         />
                       </div>
@@ -616,7 +622,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                         disabled={updateBotMutation.isPending}
                         className="gap-2"
                       >
-                        {updateBotMutation.isPending ? "Saving Profile..." : "Save Agent Profile"}
+                        {updateBotMutation.isPending ? t("saving_profile") : t("save_profile")}
                         <Save className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -628,50 +634,50 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "usage-metrics" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground">Usage Metrics</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Real-time usage volume and performance indicators for this agent.</p>
+                    <h2 className="text-lg font-bold text-foreground">{t("metrics_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("metrics_desc")}</p>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl pt-2">
                     <div className="border border-border p-5 rounded-md bg-secondary/15 space-y-2">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold">
                         <MessageSquare className="w-4 h-4 text-primary" />
-                        <span>Messages Processed</span>
+                        <span>{t("messages_processed")}</span>
                       </div>
                       <p className="text-3xl font-bold text-foreground">{botMessageCount}</p>
-                      <p className="text-[10px] text-muted-foreground">Volume in the current billing period</p>
+                      <p className="text-[10px] text-muted-foreground">{t("billing_volume")}</p>
                     </div>
 
                     <div className="border border-border p-5 rounded-md bg-secondary/15 space-y-2">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold">
                         <Activity className="w-4 h-4 text-emerald-500" />
-                        <span>Avg Response Time</span>
+                        <span>{t("avg_response_time")}</span>
                       </div>
                       <p className="text-3xl font-bold text-foreground">{analytics?.avg_response_time || 0}s</p>
-                      <p className="text-[10px] text-muted-foreground">Average text streaming generation latency</p>
+                      <p className="text-[10px] text-muted-foreground">{t("latency_desc")}</p>
                     </div>
 
                     <div className="border border-border p-5 rounded-md bg-secondary/15 space-y-2">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold">
                         <Check className="w-4 h-4 text-blue-500" />
-                        <span>Resolution Rate</span>
+                        <span>{t("resolution_rate")}</span>
                       </div>
                       <p className="text-3xl font-bold text-foreground">{analytics?.resolution_rate || 100}%</p>
-                      <p className="text-[10px] text-muted-foreground">Successful query response delivery rate</p>
+                      <p className="text-[10px] text-muted-foreground">{t("resolution_desc")}</p>
                     </div>
                   </div>
 
                   {usage && (
                     <div className="border border-border/60 bg-secondary/5 rounded-md p-5 max-w-4xl space-y-4">
                       <div>
-                        <h3 className="text-sm font-semibold text-foreground">Workspace Message Share</h3>
-                        <p className="text-[11px] text-muted-foreground">Percentage of your workspace's total monthly message limit consumed by this specific agent.</p>
+                        <h3 className="text-sm font-semibold text-foreground">{t("workspace_share")}</h3>
+                        <p className="text-[11px] text-muted-foreground">{t("workspace_share_desc")}</p>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs font-medium text-foreground">
-                          <span>{botMessageCount} messages</span>
-                          <span>Limit: {usage.limits.chat_messages_per_month}</span>
+                          <span>{t("messages_count", { count: botMessageCount })}</span>
+                          <span>{t("limit_count", { limit: usage.limits.chat_messages_per_month })}</span>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
                           <div 
@@ -680,8 +686,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           />
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground">
-                          <span>This agent represents {Math.min(100, Math.round((botMessageCount / (usage.used.chat_messages || 1)) * 100))}% of current workspace usage ({usage.used.chat_messages} messages used)</span>
-                          <span>{Math.min(100, Math.round((botMessageCount / (usage.limits.chat_messages_per_month || 1)) * 100))}% of total monthly limit</span>
+                          <span>{t("agent_share_text", { pct: Math.min(100, Math.round((botMessageCount / (usage.used.chat_messages || 1)) * 100)), used: usage.used.chat_messages })}</span>
+                          <span>{t("total_share_text", { pct: Math.min(100, Math.round((botMessageCount / (usage.limits.chat_messages_per_month || 1)) * 100)) })}</span>
                         </div>
                       </div>
                     </div>
@@ -693,14 +699,14 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "knowledge" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Grounded Knowledge Base</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Add documentation, websites, or PDFs so your agent has the right context to answer customer questions.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("knowledge_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("knowledge_desc")}</p>
                   </div>
                   {ingestionError && (
                     <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md flex gap-3 text-red-200">
                       <AlertCircle className="w-5 h-5 shrink-0" />
                       <div className="text-xs space-y-1">
-                        <p className="font-bold">Ingestion issue detected</p>
+                        <p className="font-bold">{t("ingest_issue")}</p>
                         <p className="opacity-80 leading-relaxed">{ingestionError}</p>
                       </div>
                     </div>
@@ -715,7 +721,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                         className="mt-0.5 border-border bg-secondary accent-primary w-3.5 h-3.5"
                       />
                       <div className="text-xs text-muted-foreground leading-relaxed">
-                        I confirm that I have the legal rights to use this website crawler or upload this PDF document, and understand that crawling must respect access guidelines.
+                        {t("rights_confirmation")}
                       </div>
                     </label>
 
@@ -723,19 +729,19 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       <TabsList className="grid w-full grid-cols-2 bg-secondary/40 border border-border/60 p-1 h-10 rounded-lg">
                         <TabsTrigger value="url" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md text-xs font-semibold">
                           <Globe className="w-3.5 h-3.5 mr-2" />
-                          Website Crawler
+                          {t("crawler_tab")}
                         </TabsTrigger>
                         <TabsTrigger value="file" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md text-xs font-semibold">
                           <Upload className="w-3.5 h-3.5 mr-2" />
-                          PDF Document
+                          {t("pdf_tab")}
                         </TabsTrigger>
                       </TabsList>
                       
                       <TabsContent value="url" className="mt-4 space-y-4">
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground font-medium">Target URL to Index</Label>
+                          <Label className="text-xs text-muted-foreground font-medium">{t("url_label")}</Label>
                           <Input 
-                            placeholder="https://docs.mycompany.com" 
+                            placeholder={t("url_placeholder")} 
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             className="bg-background"
@@ -747,7 +753,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           disabled={!url || ingesting || !rightsConfirmed}
                           className="w-full"
                         >
-                          {ingesting ? "Importing Website..." : "Index Website URL"}
+                          {ingesting ? t("importing_url") : t("index_url_btn")}
                         </Button>
                       </TabsContent>
 
@@ -761,7 +767,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                             e.preventDefault();
                             const file = e.dataTransfer.files[0];
                             if (file?.type === "application/pdf") setPdfFile(file);
-                            else toast.error("Please upload a PDF file");
+                            else toast.error(t("pdf_only_error"));
                           }}
                         >
                           {pdfFile ? (
@@ -774,13 +780,13 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                                 onClick={() => setPdfFile(null)}
                                 className="mt-2 text-muted-foreground hover:text-foreground text-[10px] h-7"
                               >
-                                Cancel Selection
+                                {t("cancel_selection")}
                               </Button>
                             </>
                           ) : (
                             <>
                               <Upload className="w-8 h-8 text-muted-foreground/30 mb-2" />
-                              <p className="text-xs text-muted-foreground text-center mb-1">Drag PDF file here or click to select</p>
+                              <p className="text-xs text-muted-foreground text-center mb-1">{t("drag_pdf")}</p>
                               <input 
                                 type="file" 
                                 accept=".pdf" 
@@ -794,7 +800,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                                 className="mt-2 border-border bg-secondary/50 rounded-lg text-[10px] h-8"
                                 onClick={() => document.getElementById('pdf-upload-settings')?.click()}
                               >
-                                Select PDF File
+                                {t("select_pdf_btn")}
                               </Button>
                             </>
                           )}
@@ -805,7 +811,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           disabled={!pdfFile || ingesting || !rightsConfirmed}
                           className="w-full font-bold text-xs"
                         >
-                          {ingesting ? "Ingesting PDF..." : "Upload & Parse PDF"}
+                          {ingesting ? t("ingesting_pdf") : t("upload_pdf_btn")}
                         </Button>
                       </TabsContent>
                     </Tabs>
@@ -817,8 +823,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "integration-widget" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Embed Chat Widget</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Add this script to your site code to deploy the live chat widget bubble.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("widget_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("widget_desc")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
@@ -826,8 +832,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       <div className="space-y-3">
                         <div className="flex flex-row items-center justify-between">
                           <div>
-                            <h3 className="text-xs font-bold text-foreground">Html Script Embed Code</h3>
-                            <p className="text-[10px] text-muted-foreground">Paste it right before the closing &lt;/body&gt; tag</p>
+                            <h3 className="text-xs font-bold text-foreground">{t("embed_code_title")}</h3>
+                            <p className="text-[10px] text-muted-foreground">{t("embed_code_subtitle")}</p>
                           </div>
                           <Button
                             onClick={handleCopyCode}
@@ -837,7 +843,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                             }`}
                           >
                             {copied ? <Check className="w-3 h-3 mr-1.5" /> : <Copy className="w-3 h-3 mr-1.5" />}
-                            {copied ? "Copied!" : "Copy Code"}
+                            {copied ? t("copied") : t("copy_code")}
                           </Button>
                         </div>
                         <div className="relative">
@@ -850,16 +856,16 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         {[
                           {
-                            title: "1. Embed code",
-                            desc: "Paste the HTML script into your website builder or templates."
+                            title: t("step1_title"),
+                            desc: t("step1_desc")
                           },
                           {
-                            title: "2. Deploy site",
-                            desc: "Push your updates live to let your users connect."
+                            title: t("step2_title"),
+                            desc: t("step2_desc")
                           },
                           {
-                            title: "3. Update theme",
-                            desc: "Match widget color scheme anytime in the Theme panel."
+                            title: t("step3_title"),
+                            desc: t("step3_desc")
                           }
                         ].map((step) => (
                           <div key={step.title} className="p-3 rounded-lg bg-secondary/20 border border-border/50">
@@ -872,22 +878,22 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
                     <div className="lg:col-span-4 space-y-4">
                       <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-foreground">Embed Status</h3>
+                        <h3 className="text-xs font-bold text-foreground">{t("embed_status")}</h3>
                         <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/40">
-                          <span className="text-xs text-muted-foreground">Embed Service</span>
+                          <span className="text-xs text-muted-foreground">{t("embed_service")}</span>
                           <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
-                            <span className="text-xs font-semibold text-foreground">Active</span>
+                            <span className="text-xs font-semibold text-foreground">{t("active_status")}</span>
                           </div>
                         </div>
                         <div className="space-y-2.5 text-[10px] text-muted-foreground leading-relaxed">
                           <div className="flex items-start gap-2">
                             <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p>Requests are securely validated via the public Agent ID.</p>
+                            <p>{t("security_note")}</p>
                           </div>
                           <div className="flex items-start gap-2">
                             <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <p>Compatible with React, Vue, NextJS, Webflow, Shopify, WordPress.</p>
+                            <p>{t("compatibility_note")}</p>
                           </div>
                         </div>
                       </div>
@@ -900,20 +906,20 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "integration-telegram" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Telegram Bot Connection</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Connect your AI Agent to a Telegram bot token to handle customer inquiries on Telegram.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("telegram_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("telegram_desc")}</p>
                   </div>
 
                   <div className="max-w-2xl space-y-4">
                     <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-md border border-border/60">
-                      <span className="text-xs font-medium text-foreground/70">Connection Status</span>
+                      <span className="text-xs font-medium text-foreground/70">{t("connection_status")}</span>
                       {channels.some(c => c.type === 'telegram') ? (
                         <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold uppercase px-2.5 py-0.5 rounded-md">
-                          Connected
+                          {t("connected")}
                         </span>
                       ) : (
                         <span className="text-[10px] bg-secondary border border-border/60 text-muted-foreground font-bold uppercase px-2.5 py-0.5 rounded-md">
-                          Disconnected
+                          {t("disconnected")}
                         </span>
                       )}
                     </div>
@@ -926,7 +932,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                         return (
                           <div className="space-y-4 p-4 bg-secondary/35 border border-border rounded-md">
                             <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Webhook Callback</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t("webhook_callback")}</span>
                               <div className="text-xs font-mono text-emerald-300 bg-secondary p-3 rounded-lg break-all shadow-inner">
                                 {hookUrl}
                               </div>
@@ -938,7 +944,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                               className="text-red-500 hover:text-red-600 hover:bg-destructive/10 text-xs h-9 px-4"
                             >
                               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                              Disconnect Telegram Bot
+                              {t("disconnect_telegram")}
                             </Button>
                           </div>
                         );
@@ -946,16 +952,16 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     ) : (
                       <div className="space-y-4 p-4 bg-secondary/10 border border-border rounded-md">
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground font-medium">Telegram Bot Token</Label>
+                          <Label className="text-xs text-muted-foreground font-medium">{t("telegram_token_label")}</Label>
                           <Input
                             type="password"
-                            placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                            placeholder={t("telegram_token_placeholder")}
                             value={telegramToken}
                             onChange={(e) => setTelegramToken(e.target.value)}
                             className="bg-background"
                           />
                           <p className="text-[10px] text-muted-foreground/60 leading-normal">
-                            Get a bot token by talking to the official <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-primary hover:underline">@BotFather</a> on Telegram.
+                            {t("telegram_token_hint")}
                           </p>
                         </div>
                         <Button
@@ -963,7 +969,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           disabled={isConnectingTelegram} onClick={handleConnectTelegram}
                           className="font-bold text-xs"
                         >
-                          {isConnectingTelegram ? "Connecting Bot..." : "Connect Bot Token"}
+                          {isConnectingTelegram ? t("connecting_telegram") : t("connect_telegram_btn")}
                         </Button>
                       </div>
                     )}
@@ -975,20 +981,20 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "integration-whatsapp" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">WhatsApp Cloud API Connection</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Connect your AI Agent to your WhatsApp business profile using the official Meta developer cloud API.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("whatsapp_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("whatsapp_desc")}</p>
                   </div>
 
                   <div className="max-w-2xl space-y-4">
                     <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-md border border-border/60">
-                      <span className="text-xs font-medium text-foreground/70">Connection Status</span>
+                      <span className="text-xs font-medium text-foreground/70">{t("connection_status")}</span>
                       {channels.some(c => c.type === 'whatsapp') ? (
                         <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold uppercase px-2.5 py-0.5 rounded-md">
-                          Connected
+                          {t("connected")}
                         </span>
                       ) : (
                         <span className="text-[10px] bg-secondary border border-border/60 text-muted-foreground font-bold uppercase px-2.5 py-0.5 rounded-md">
-                          Disconnected
+                          {t("disconnected")}
                         </span>
                       )}
                     </div>
@@ -1002,19 +1008,19 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                         return (
                           <div className="space-y-4.5 p-4 bg-secondary/35 border border-border rounded-md">
                             <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Webhook Callback URL</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t("webhook_url")}</span>
                               <div className="text-xs font-mono text-emerald-300 bg-secondary p-3 rounded-lg break-all shadow-inner">
                                 {hookUrl}
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Verify Token</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t("verify_token")}</span>
                               <div className="text-xs font-mono text-emerald-300 bg-secondary p-3 rounded-lg break-all shadow-inner">
                                 {verifyToken}
                               </div>
                             </div>
                             <p className="text-[10px] leading-relaxed text-muted-foreground/60">
-                              Configure the Webhook parameters above inside the Webhooks settings in your Meta App Developer Dashboard.
+                              {t("whatsapp_hint")}
                             </p>
                             <Button
                               type="button"
@@ -1023,7 +1029,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                               className="text-red-500 hover:text-red-600 hover:bg-destructive/10 text-xs h-9 px-4"
                             >
                               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                              Disconnect WhatsApp
+                              {t("disconnect_whatsapp")}
                             </Button>
                           </div>
                         );
@@ -1032,7 +1038,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       <div className="space-y-4 p-4 bg-secondary/10 border border-border rounded-md">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground font-medium">Phone Number ID</Label>
+                            <Label className="text-xs text-muted-foreground font-medium">{t("phone_id_label")}</Label>
                             <Input
                               placeholder="e.g. 109283920283722"
                               value={whatsappPhoneId}
@@ -1041,7 +1047,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground font-medium">Webhook Verify Token</Label>
+                            <Label className="text-xs text-muted-foreground font-medium">{t("verify_token_label")}</Label>
                             <Input
                               placeholder="Specify any unique string"
                               value={whatsappVerifyToken}
@@ -1051,7 +1057,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground font-medium">System User Access Token</Label>
+                          <Label className="text-xs text-muted-foreground font-medium">{t("access_token_label")}</Label>
                           <Input
                             type="password"
                             placeholder="EAABw..."
@@ -1065,7 +1071,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           disabled={isConnectingWhatsApp} onClick={handleConnectWhatsApp}
                           className="font-bold text-xs"
                         >
-                          {isConnectingWhatsApp ? "Connecting WhatsApp..." : "Connect WhatsApp API"}
+                          {isConnectingWhatsApp ? t("connecting_whatsapp") : t("connect_whatsapp_btn")}
                         </Button>
                       </div>
                     )}
@@ -1077,8 +1083,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
               {activeTab === "preview-theme" && (
                 <div className="space-y-6">
                   <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Appearance Customization</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Adjust brand colors, custom themes, and default welcome greetings.</p>
+                    <h2 className="text-lg font-bold text-foreground ">{t("appearance_title")}</h2>
+                    <p className="text-xs text-muted-foreground mt-1">{t("appearance_desc")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start max-w-5xl">
@@ -1086,7 +1092,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                     <form onSubmit={handleProfileSubmit} className="lg:col-span-7 space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Primary Brand Color</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">{t("primary_color")}</Label>
                           <div className="flex gap-2">
                             <Input 
                               type="color"
@@ -1103,7 +1109,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                         </div>
 
                         <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Preset Colors</Label>
+                          <Label className="text-xs font-medium text-muted-foreground">{t("preset_colors")}</Label>
                           <div className="flex flex-wrap gap-2 pt-1">
                             {['#7c3aed', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'].map((color) => (
                               <button
@@ -1121,11 +1127,11 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">Greeting Welcome Message</Label>
+                        <Label className="text-xs font-medium text-muted-foreground">{t("greeting_msg")}</Label>
                         <Input 
                           value={formData.welcome_message}
                           onChange={(e) => setFormData({...formData, welcome_message: e.target.value})}
-                          placeholder="e.g. Hello! How can I help you today?"
+                          placeholder={t("greeting_placeholder")}
                           className="bg-background"
                         />
                       </div>
@@ -1136,7 +1142,7 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           disabled={updateBotMutation.isPending}
                           className="font-bold text-xs gap-2"
                         >
-                          {updateBotMutation.isPending ? "Saving Appearance..." : "Save Appearance Settings"}
+                          {updateBotMutation.isPending ? t("saving_appearance") : t("save_appearance")}
                           <Save className="w-3.5 h-3.5" />
                         </Button>
                       </div>
@@ -1144,21 +1150,21 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
                     {/* Instant Mock Widget Preview */}
                     <div className="lg:col-span-5 space-y-3 pt-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block px-1">Live Widget Mockup</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block px-1">{t("live_mockup")}</span>
                       <div className="bg-background rounded-md border border-border overflow-hidden shadow-sm">
                         <div className="p-3 border-b border-border flex items-center gap-2" style={{ backgroundColor: `${formData.primary_color}18` }}>
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0" style={{ backgroundColor: formData.primary_color }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0 shadow-xs text-white" style={{ backgroundColor: formData.primary_color }}>
                             {formData.avatar_url ? (
-                              <img src={formData.avatar_url} className="w-full h-full object-cover" alt="bot" />
+                              <img src={formData.avatar_url} className="w-full h-full object-cover" alt="AI Agent" />
                             ) : (
-                              <Bot className="w-4 h-4 text-white" />
+                              <Sparkles className="w-4 h-4 text-white" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-[11px] font-bold text-foreground truncate">{formData.name || "Support Assistant"}</h4>
+                            <h4 className="text-[11px] font-bold text-foreground truncate">{formData.name || t("ai_assistant")}</h4>
                             <div className="flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                              <span className="text-[8px] text-muted-foreground uppercase tracking-tighter">Online</span>
+                              <span className="text-[8px] text-muted-foreground uppercase tracking-tighter font-semibold">{t("ai_assistant")}</span>
                             </div>
                           </div>
                         </div>
@@ -1177,104 +1183,130 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
               {/* TAB 7: PREVIEW - INTERACTIVE PREVIEW WIDGET */}
               {activeTab === "preview-widget" && (
-                <div className="space-y-4 flex flex-col h-[65vh]">
-                  <div className="pb-4 border-b border-border/40">
-                    <h2 className="text-lg font-bold text-foreground ">Live Widget Preview Sandbox</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Test the agent's knowledge and response speed in a real-time conversational streaming terminal.</p>
+                <div className="h-full flex flex-col flex-1 min-h-0 bg-background/30">
+                  {/* Mock header */}
+                  <div className="p-3.5 px-6 bg-card/60 border-b border-border/40 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-xs text-white" style={{ backgroundColor: formData.primary_color }}>
+                        {formData.avatar_url ? (
+                          <img src={formData.avatar_url} className="w-full h-full object-cover rounded-lg" alt="AI Agent" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground leading-none">{formData.name || t("ai_assistant")}</h4>
+                        <span className="text-[9px] text-muted-foreground flex items-center gap-1 mt-1 font-medium tracking-tight">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          <span>{t("ai_assistant")}</span>
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setMessages([{ role: "assistant", content: formData.welcome_message }]);
+                        toast.success(t("chat_cleared"));
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground h-8 px-3 gap-1.5 font-medium hover:bg-secondary/60 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {t("clear_chat")}
+                    </Button>
                   </div>
 
-                  {/* Interactive Widget Terminal Container (borderless, direct layout) */}
-                  <div className="flex-1 bg-background/50 border border-border/60 rounded-lg overflow-hidden flex flex-col min-h-0">
-                    {/* Mock header */}
-                    <div className="p-3 bg-secondary/30 border-b border-border/40 flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: formData.primary_color }}>
-                          {formData.avatar_url ? (
-                            <img src={formData.avatar_url} className="w-full h-full object-cover" alt="bot" />
-                          ) : (
-                            <Bot className="w-3.5 h-3.5 text-white" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-foreground leading-none">{formData.name || "AI Agent"}</h4>
-                          <span className="text-[8px] text-muted-foreground flex items-center gap-0.5 mt-0.5 uppercase tracking-tighter">
-                            <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-                            Sandboxed Terminal
-                          </span>
-                        </div>
+                  {/* Message Stream */}
+                  <ScrollArea className="flex-1 p-4 md:p-6 min-h-0 font-sans">
+                    {messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center gap-2">
+                        <Sparkles className="w-8 h-8 text-primary/40 animate-pulse" />
+                        <p className="text-xs text-muted-foreground">{t("init_chat")}</p>
                       </div>
-                      
-                      <Button
-                        variant="ghost" onClick={() => setMessages([{ role: "assistant", content: formData.welcome_message }])}
-                        className="text-[10px] text-muted-foreground hover:text-foreground h-8 px-2.5 gap-1"
-                      >
-                        <RefreshCcw className="w-3.5 h-3.5" />
-                        Restart Chat
-                      </Button>
-                    </div>
-
-                    {/* Message Stream */}
-                    <ScrollArea className="flex-1 p-4 min-h-0 font-sans">
-                      {messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-48 text-center gap-2">
-                          <Bot className="w-8 h-8 text-muted-foreground/30 animate-pulse" />
-                          <p className="text-xs text-muted-foreground">Initializing chat terminal...</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4 pb-2">
-                          {messages.map((message, index) => (
-                            <div
-                              key={`${message.role}-${index}`}
-                              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                            >
+                    ) : (
+                      <div className="space-y-4 pb-2 max-w-4xl mx-auto">
+                        {messages.map((message, index) => (
+                          <div
+                            key={`${message.role}-${index}`}
+                            className={`flex gap-3 items-start ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                          >
+                            {message.role === "assistant" && (
                               <div
-                                className={`max-w-[85%] rounded-md px-3.5 py-2 text-xs border ${
-                                  message.role === "user"
-                                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                                    : "bg-secondary/40 text-foreground border-border/85"
-                                }`}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-xs mt-0.5 text-white"
+                                style={{ backgroundColor: formData.primary_color }}
                               >
-                                <div className="prose prose-sm max-w-none text-inherit leading-relaxed dark:prose-invert">
-                                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                                {formData.avatar_url ? (
+                                  <img src={formData.avatar_url} className="w-full h-full object-cover rounded-lg" alt="AI" />
+                                ) : (
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                )}
+                              </div>
+                            )}
+                            <div
+                              className={`max-w-[85%] rounded-lg px-4 py-2.5 text-xs border ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                  : "bg-card text-foreground border-border/70 shadow-xs"
+                              }`}
+                            >
+                              {message.role === "assistant" && (
+                                <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-border/40 text-[10px] font-semibold text-primary">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>{t("ai_response")}</span>
                                 </div>
-                                {index === messages.length - 1 &&
-                                  isTyping &&
-                                  message.role === "assistant" && (
-                                    <span className="inline-block w-1.5 h-3.5 bg-current opacity-60 ml-0.5 animate-pulse align-middle" />
-                                  )}
+                              )}
+                              <div className="prose prose-sm max-w-none text-inherit leading-relaxed dark:prose-invert">
+                                <ReactMarkdown>{message.content}</ReactMarkdown>
                               </div>
+                              {index === messages.length - 1 &&
+                                isTyping &&
+                                message.role === "assistant" && (
+                                  <span className="inline-block w-1.5 h-3.5 bg-current opacity-60 ml-0.5 animate-pulse align-middle" />
+                                )}
                             </div>
-                          ))}
+                          </div>
+                        ))}
 
-                          {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
-                            <div className="flex justify-start">
-                              <div className="rounded-md px-3 py-1.5 bg-secondary/40 border border-border/80 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-                                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
-                              </div>
+                        {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
+                          <div className="flex gap-3 items-start justify-start">
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-xs mt-0.5 text-white"
+                              style={{ backgroundColor: formData.primary_color }}
+                            >
+                              {formData.avatar_url ? (
+                                <img src={formData.avatar_url} className="w-full h-full object-cover rounded-lg" alt="AI" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              )}
                             </div>
-                          )}
+                            <div className="rounded-lg px-3.5 py-2 bg-card border border-border/70 flex items-center gap-1.5 shadow-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
+                            </div>
+                          </div>
+                        )}
 
-                          <div ref={bottomRef} />
-                        </div>
-                      )}
-                    </ScrollArea>
+                        <div ref={bottomRef} />
+                      </div>
+                    )}
+                  </ScrollArea>
 
-                    {/* Input Footer */}
-                    <form onSubmit={handleSendChatMessage} className="p-3 bg-secondary/20 border-t border-border/40 flex items-center gap-2 shrink-0">
+                  {/* Input Footer */}
+                  <form onSubmit={handleSendChatMessage} className="p-3.5 px-6 bg-card/60 border-t border-border/40 flex items-center shrink-0">
+                    <div className="flex-1 max-w-4xl mx-auto flex items-center gap-3 w-full">
                       <Input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        placeholder="Type a query to test your grounded knowledge..."
+                        placeholder={t("chat_placeholder")}
                         disabled={isTyping}
-                        className="flex-1 bg-secondary/50 border-border/60 h-10 rounded-lg text-xs"
+                        className="flex-1 bg-background border-border/60 h-10 rounded-lg text-xs"
                       />
                       <Button
                         type="submit"
                         size="icon"
                         disabled={!chatInput.trim() || isTyping}
-                        className="h-9 w-9 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="h-10 w-10 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
                       >
                         {isTyping ? (
                           <RefreshCcw className="w-4 h-4 animate-spin" />
@@ -1282,8 +1314,8 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
                           <SendIcon className="w-4 h-4" />
                         )}
                       </Button>
-                    </form>
-                  </div>
+                    </div>
+                  </form>
                 </div>
               )}
 
@@ -1292,6 +1324,5 @@ export default function AgentWorkspacePage({ params }: { params: Promise<{ id: s
 
         </div>
       </div>
-    </Sidebar>
-  );
+    );
 }

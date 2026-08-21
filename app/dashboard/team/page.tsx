@@ -9,7 +9,6 @@ import {
   UserCheck, ChevronRight, Sparkles, Lock
 } from "lucide-react";
 import { toast } from "sonner";
-import Sidebar from "@/components/shared/Sidebar";
 import RoleGuard from "@/components/shared/RoleGuard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -326,8 +325,7 @@ export default function WorkspaceTeamPage() {
 
   return (
     <RoleGuard requiredPermission="manage_members" requiredPermissionLabel="Manage Members">
-      <Sidebar>
-        <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Streamlined Header with Top-Right Action Button */}
         <div className="flex items-center justify-between pb-4 border-b border-border/40 flex-wrap gap-4">
           <div>
@@ -711,8 +709,7 @@ export default function WorkspaceTeamPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        </div>
-      </Sidebar>
+      </div>
     </RoleGuard>
   );
 }

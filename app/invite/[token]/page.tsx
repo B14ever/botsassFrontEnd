@@ -2,7 +2,7 @@
 
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Spokes } from "@/components/loading-ui/spokes";
 
 /**
  * Redirect shim: /invite/[token] → /org/invite/[token]
@@ -21,7 +21,7 @@ export default function InviteRedirectPage({ params }: { params: Promise<{ token
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Spokes className="size-16" />
         <p className="text-sm text-muted-foreground">Redirecting to invitation page…</p>
       </div>
     </div>

@@ -24,9 +24,8 @@ import {
   Image as ImageIcon,
   Settings,
   Brain,
-  RotateCcw
+  RotateCcw,
 } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -521,7 +520,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   };
 
   return (
-    <Sidebar>
+    <>
       <div className="w-full h-full flex flex-col xl:flex-row gap-6 overflow-hidden bg-transparent">
         {/* Left Workspace Panel */}
         <div className="w-full xl:w-[320px] flex flex-col shrink-0 gap-6 overflow-y-auto custom-scrollbar">
@@ -1054,7 +1053,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
         </div>
       )}
-    </Sidebar>
+    </>
   );
 }
 

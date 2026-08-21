@@ -5,6 +5,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import AuthAnimationSection from "@/components/auth/AuthAnimationSection";
 
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import ThemeToggle from "@/components/shared/ThemeToggle";
+
 interface AuthLayoutProps {
   title: string;
   subtitle: string;
@@ -18,10 +21,10 @@ export default function AuthLayout({
 }: AuthLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-background relative overflow-x-hidden selection:bg-primary/20">
-      {/* Transparent Top Header (Logo Redirecting to Home) */}
+      {/* Transparent Top Header (Logo Redirecting to Home + Language Switcher) */}
       <header className="absolute top-0 inset-x-0 z-50 w-full bg-transparent">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-start h-16 md:h-18">
+          <div className="flex items-center justify-between h-16 md:h-18">
             <Link href="/" className="flex items-center gap-2.5 group">
               <img
                 src="/redas_icon.png"
@@ -37,6 +40,11 @@ export default function AuthLayout({
                 </span>
               </div>
             </Link>
+
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>

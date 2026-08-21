@@ -18,11 +18,12 @@ import {
   FileText,
   AlertCircle,
   Monitor,
-  Code2
+  Code2,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spokes } from "@/components/loading-ui/spokes";
 import {
   Card,
   CardContent,
@@ -35,7 +36,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Sidebar from "@/components/shared/Sidebar";
 import { getAxiosErrorMessage } from "@/lib/api/errors";
 
 export default function BotSettingsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -218,14 +218,13 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <RefreshCcw className="w-8 h-8 text-primary animate-spin" />
+        <Spokes className="size-16" />
       </div>
     );
   }
 
   return (
-    <Sidebar>
-      <div className="space-y-8 max-w-6xl mx-auto pb-20">
+    <div className="space-y-8 max-w-6xl mx-auto pb-20">
         <div className="flex items-center justify-between">
           <div>
             <Link
@@ -758,6 +757,5 @@ export default function BotSettingsPage({ params }: { params: Promise<{ id: stri
         </div>
         </form>
       </div>
-    </Sidebar>
-  );
+    );
 }

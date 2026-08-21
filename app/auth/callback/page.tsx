@@ -4,7 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
-import { Loader2 } from 'lucide-react';
+import { Spokes } from '@/components/loading-ui/spokes';
 
 function CallbackContent() {
   const searchParams = useSearchParams();
@@ -33,7 +33,7 @@ function CallbackContent() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-      <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      <Spokes className="size-16" />
       <h2 className="text-xl font-outfit font-semibold gradient-text">Authenticating with Google...</h2>
       <p className="text-muted-foreground text-sm">Please wait while we secure your session.</p>
     </div>

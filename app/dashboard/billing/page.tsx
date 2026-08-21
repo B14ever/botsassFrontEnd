@@ -5,7 +5,6 @@ import {
   Check, MessageSquare, Bot, FolderOpen,
   BarChart3, Radio, Sparkles, ShieldAlert
 } from "lucide-react";
-import Sidebar from "@/components/shared/Sidebar";
 import RoleGuard from "@/components/shared/RoleGuard";
 import PageHeader from "@/components/shared/PageHeader";
 import { fetchSubscription } from "@/lib/api/subscription";
@@ -15,15 +14,7 @@ import { useWorkspaceStore } from "@/store/workspaceStore";
 import { listMembers, type WorkspaceMember } from "@/lib/api/workspace";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
-const USAGE_METRICS = [
-  { key: "bots",            label: "Bots",            icon: <Bot className="w-3.5 h-3.5" />,          used: (u: UsageUsed) => u.bots,             limit: (l: UsageLimits) => l.bots },
-  { key: "chat",            label: "Monthly chats",   icon: <MessageSquare className="w-3.5 h-3.5" />, used: (u: UsageUsed) => u.chat_messages,    limit: (l: UsageLimits) => l.chat_messages_per_month },
-  { key: "projects",        label: "Projects",         icon: <FolderOpen className="w-3.5 h-3.5" />,   used: (u: UsageUsed) => u.projects,         limit: (l: UsageLimits) => l.projects },
-  { key: "reports",         label: "Reports",          icon: <BarChart3 className="w-3.5 h-3.5" />,    used: (u: UsageUsed) => u.reports_generated, limit: (l: UsageLimits) => l.reports_generated },
-  { key: "project_messages",label: "Project msgs",    icon: <MessageSquare className="w-3.5 h-3.5" />, used: (u: UsageUsed) => u.project_messages, limit: (l: UsageLimits) => l.project_messages },
-  { key: "channels",        label: "Channels",         icon: <Radio className="w-3.5 h-3.5" />,        used: (u: UsageUsed) => u.channels,         limit: (l: UsageLimits) => l.channels_connected },
-];
+import { useTranslations } from "next-intl";
 
 type UsageUsed = {
   bots: number; sources: number; website_pages: number; pdf_pages: number;
@@ -39,6 +30,9 @@ type UsageLimits = {
 };
 
 export default function BillingPage() {
+  const t = useTranslations("billing");
+  const tUsage = useTranslations("usage");
+  const tPlans = useTranslations("plans");
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const currentUser = useAuthStore((s) => s.user);
 
@@ -50,19 +44,27 @@ export default function BillingPage() {
   const currentMember = members.find((m) => m.user_id === currentUser?.id);
   const isNotOwnerOrAdmin = currentMember && currentMember.role_id !== "owner" && currentMember.role_id !== "admin";
 
+  const USAGE_METRICS = [
+    { key: "bots",            label: tPlans("row_bots"),            icon: <Bot className="w-3.5 h-3.5" />,          used: (u: UsageUsed) => u.bots,             limit: (l: UsageLimits) => l.bots },
+    { key: "chat",            label: tPlans("row_chats"),           icon: <MessageSquare className="w-3.5 h-3.5" />, used: (u: UsageUsed) => u.chat_messages,    limit: (l: UsageLimits) => l.chat_messages_per_month },
+    { key: "projects",        label: tPlans("row_workspaces"),      icon: <FolderOpen className="w-3.5 h-3.5" />,   used: (u: UsageUsed) => u.projects,         limit: (l: UsageLimits) => l.projects },
+    { key: "reports",         label: tPlans("row_reports"),         icon: <BarChart3 className="w-3.5 h-3.5" />,    used: (u: UsageUsed) => u.reports_generated, limit: (l: UsageLimits) => l.reports_generated },
+    { key: "project_messages",label: tPlans("row_projmsgs"),        icon: <MessageSquare className="w-3.5 h-3.5" />, used: (u: UsageUsed) => u.project_messages, limit: (l: UsageLimits) => l.project_messages },
+    { key: "channels",        label: tPlans("row_channels"),        icon: <Radio className="w-3.5 h-3.5" />,        used: (u: UsageUsed) => u.channels,         limit: (l: UsageLimits) => l.channels_connected },
+  ];
+
   return (
     <RoleGuard requiredPermission="manage_billing" requiredPermissionLabel="Manage Billing">
-      <Sidebar>
       <div className="max-w-5xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <PageHeader
-          title="Billing & Usage Limits"
-          description="Manage workspace subscription plan, active quotas, and seat meters."
+          title={t("title")}
+          description={t("subtitle")}
           actions={
             !isNotOwnerOrAdmin && (
               <Link href="/dashboard/plans">
                 <Button size="sm" className="gap-2 h-9">
                   <Sparkles className="w-3.5 h-3.5" />
-                  Upgrade Plan
+                  {t("upgrade_plan")}
                 </Button>
               </Link>
             )
@@ -74,9 +76,9 @@ export default function BillingPage() {
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3.5 flex items-center gap-3 text-xs text-amber-500 font-medium">
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <div>
-              <p className="font-semibold text-foreground">Billing Management Restricted</p>
+              <p className="font-semibold text-foreground">{t("restricted_title")}</p>
               <p className="text-muted-foreground mt-0.5">
-                You belong to this workspace as a <span className="capitalize font-medium text-foreground">{currentMember.role_name || currentMember.role_id}</span>. Only Workspace Owners and Admins can modify subscription plans or billing details.
+                {t("restricted_desc", { role: currentMember.role_name || currentMember.role_id })}
               </p>
             </div>
           </div>
@@ -91,13 +93,13 @@ export default function BillingPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-foreground capitalize">{subscription.plan_code} Plan</h3>
+                  <h3 className="text-sm font-bold text-foreground capitalize">{t("plan_heading", { plan: subscription.plan_code })}</h3>
                   <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                     {subscription.status}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Plan billing is handled at the workspace owner level.
+                  {t("plan_note")}
                 </p>
               </div>
             </div>
@@ -133,8 +135,7 @@ export default function BillingPage() {
             )}
           </div>
         )}
-        </div>
-      </Sidebar>
+      </div>
     </RoleGuard>
   );
 }

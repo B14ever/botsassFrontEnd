@@ -20,7 +20,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
         variant="ghost"
         size="icon"
         className={cn(
-          "h-8 w-8 rounded-lg border border-border/60 bg-secondary/40 text-muted-foreground shrink-0",
+          "h-8 w-8 rounded-full text-muted-foreground shrink-0 border-0",
           className
         )}
         disabled
@@ -38,7 +38,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
       size="icon"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
-        "h-8 w-8 rounded-lg border border-border/60 bg-secondary/40 hover:bg-secondary text-foreground hover:border-border transition-all duration-150 relative shrink-0",
+        "h-8 w-8 rounded-full hover:bg-secondary/60 text-foreground transition-colors relative shrink-0 border-0",
         className
       )}
       aria-label="Toggle theme"
